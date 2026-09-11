@@ -107,16 +107,16 @@ class RallyCarPhysics:
         brake: float [0, 1]
         handbrake: bool
         """
-        # Smart keyboard steering filter
-        # Smooth attack ramping with fast return-to-center and counter-steering
-        if steer > 0:
-            rate = 9.0 if self.steer_input < 0 else 4.5
-            self.steer_input = min(1.0, self.steer_input + rate * dt)
-        elif steer < 0:
-            rate = 9.0 if self.steer_input > 0 else 4.5
-            self.steer_input = max(-1.0, self.steer_input - rate * dt)
-        else:
-            decay_rate = 7.0
+        # Smart steering filter supporting continuous analog (mouse drag) and digital (keyboard) input
+        target_steer = max(-1.0, min(1.0, steer))
+        if target_steer > self.steer_input:
+            rate = 12.0 if self.steer_input < 0 else 6.5
+            self.steer_input = min(target_steer, self.steer_input + rate * dt)
+        elif target_steer < self.steer_input:
+            rate = 12.0 if self.steer_input > 0 else 6.5
+            self.steer_input = max(target_steer, self.steer_input - rate * dt)
+        elif target_steer == 0.0:
+            decay_rate = 8.0
             if self.steer_input > 0:
                 self.steer_input = max(0.0, self.steer_input - decay_rate * dt)
             elif self.steer_input < 0:

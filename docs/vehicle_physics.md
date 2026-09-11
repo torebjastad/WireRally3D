@@ -34,20 +34,27 @@ Ved bakkekontakt vert pitch og roll glatta inn med ein responsiv integrasjonsrat
 
 ---
 
-## 3. Smart Tastaturstyring
-Tastaturknappar gjev binære inngangar ($0$ eller $1$). For å eliminere rykkete køyring og overkompensasjon ("tank-slappers"), er det implementert eit 4-stegs styresystem:
+## 3. Styresystem: Tastatur og Mus-Draing (Analog Kontroll)
 
-1. **Dual-rate progressiv integrator:**
-   - **Attack (pådrag):** Byggjer seg jamt opp over ~0.22s (`rate = 4.5`).
-   - **Return (re-sentrering):** Slepper du tasten, kjem hjula raskt tilbake til midten (`decayRate = 7.0`).
-   - **Kjapp kontrasving:** Viss du styrer motsett veg av gjeldande sving (kontrasladd), reagerer filteret momentant dobbelt så fort (`rate = 9.0`).
-2. **Ikkje-lineær styrekurve (Soft Center):**
-   $$input_{\text{curved}} = \text{sign}(input) \cdot |input|^{1.35}$$
-   Gjev ei roleg og stabil dødsone rundt midten for finjustering på rette strekningar, medan fullt trykk gjev fullt utslag i hårnåler.
-3. **Fartsavhengig dynamisk svinglås (Speed-Sensitive Taper):**
+Fysikkmotoren støttar både digital tastaturstyring og kontinuerleg analog styring via venstreklikk og draing med musa:
+
+### A. Klikk & Dra med Mus (Analog Presisjonsstyring)
+- **Mekanisme:** Hald nede venstre museknapp kor som helst på skjermen og dra horisontalt mot venstre eller høgre.
+- **Skalering:** Draing på $\pm 130\text{ pikslar}$ svarar til fullt $100\ \%$ styreutslag. Ei lita justering på $15–30\text{ px}$ gjev superpresise småjusteringar i høg fart ($10–20\ \%$ utslag).
+- **Ikkje-lineær responskurve:** Små utslag nær klikkpunktet har ein roleg respons for presis sporing i køyrefeltet, medan kraftig draing slår raskt ut i hårnåler.
+- **Visuell HUD-indikator:** Når du dreg med musa, visest eit diskret neon-sikte med drag-linje, peikar og sanntids svinggrad i prosent (`◀ 45% VENSTRE` / `HØGRE 60% ▶`).
+- **Slepp for re-sentrering:** Når museknappen sleppast, rettar hjula seg automatisk og mjukt opp att.
+
+### B. Smart Tastaturfilter & Target-Approaching Rate Limiter
+1. **Target-approaching integrator:**
+   Både tastatur ($[-1, 0, 1]$) og mus-drag (vilkårleg flyttal i $[-1.0, 1.0]$) går gjennom ein felles mål-integrator:
+   - **Pådrag:** Rask og jamn overgang mot målvinkelen (`rate = 6.5`).
+   - **Re-sentrering:** Kjapp re-oppretting mot midten når input opphøyrer (`decayRate = 8.0`).
+   - **Kjapp kontrasving:** Ved kontrasladd (motsatt forteikn) reagerer styringa momentant med `rate = 12.0`.
+2. **Fartsavhengig dynamisk svinglås (Speed-Sensitive Taper):**
    $$\text{speedScale} = \frac{1}{1 + (\text{speed}_{\text{kmh}} / 50.0) \cdot 0.95}$$
    I låg fart ($20 \text{ km/h}$) har bilen fullt $35^\circ$ utslag for rundkøyringar; i høg fart ($120+ \text{ km/h}$) vert maksimalt utslag redusert til $8^\circ–12^\circ$.
-4. **Høgfarts gyro-stabilisering (Anti-wobble yaw damper):**
+3. **Høgfarts gyro-stabilisering (Anti-wobble yaw damper):**
    På rettstrekk dempast `yawRate` automatisk for å fjerne fiskehale-svingingar. Når brekket aktiverast vert demparen frikopla for fri sladd.
 
 ---

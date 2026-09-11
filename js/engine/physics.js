@@ -132,16 +132,17 @@ class RallyCarPhysics {
     update(throttle, steer, brake, handbrake, dt = 1.0 / 60.0) {
         dt = Math.min(dt, 0.05); // prevent spiral of death
 
-        // Smart keyboard steering filter
-        // 1. Dual-rate input filter (smooth attack, rapid return-to-center and counter-steer)
-        if (steer > 0) {
-            const rate = (this.steerInput < 0) ? 9.0 : 4.5;
-            this.steerInput = Math.min(1.0, this.steerInput + rate * dt);
-        } else if (steer < 0) {
-            const rate = (this.steerInput > 0) ? 9.0 : 4.5;
-            this.steerInput = Math.max(-1.0, this.steerInput - rate * dt);
-        } else {
-            const decayRate = 7.0;
+        // Smart steering filter supporting continuous analog (mouse drag) and digital (keyboard) input
+        // 1. Target-approaching rate limiter with rapid counter-steering and auto return-to-center
+        const targetSteer = Math.max(-1.0, Math.min(1.0, steer));
+        if (targetSteer > this.steerInput) {
+            const rate = (this.steerInput < 0) ? 12.0 : 6.5;
+            this.steerInput = Math.min(targetSteer, this.steerInput + rate * dt);
+        } else if (targetSteer < this.steerInput) {
+            const rate = (this.steerInput > 0) ? 12.0 : 6.5;
+            this.steerInput = Math.max(targetSteer, this.steerInput - rate * dt);
+        } else if (targetSteer === 0) {
+            const decayRate = 8.0;
             if (this.steerInput > 0) {
                 this.steerInput = Math.max(0.0, this.steerInput - decayRate * dt);
             } else if (this.steerInput < 0) {

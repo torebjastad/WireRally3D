@@ -55,12 +55,27 @@ class GameLoop {
         this.uiBanner = document.getElementById('bannerNotice');
         this.uiRpmBar = document.getElementById('rpmBarFill');
         this.uiOffroad = document.getElementById('offroadWarning');
+        this.uiSteerIndicator = document.getElementById('mouseSteerIndicator');
+        this.uiSteerLine = document.getElementById('steerLine');
+        this.uiSteerPointer = document.getElementById('steerPointer');
+        this.uiSteerBadge = document.getElementById('steerBadge');
+
+        // Mouse click-and-drag steering state
+        this.mouseSteer = {
+            isDragging: false,
+            startX: 0,
+            startY: 0,
+            currentX: 0,
+            currentY: 0,
+            steerValue: 0.0
+        };
 
         // Timing
         this.lastTime = performance.now();
         this.isRunning = false;
 
         this.setupInputs();
+        this.setupMouseSteering();
         this.setupTouchControls();
     }
 
@@ -142,6 +157,120 @@ class GameLoop {
         });
     }
 
+    setupMouseSteering() {
+        const onDragStart = (clientX, clientY) => {
+            if (!this.audio.initialized) this.audio.init();
+            this.mouseSteer.isDragging = true;
+            this.mouseSteer.startX = clientX;
+            this.mouseSteer.startY = clientY;
+            this.mouseSteer.currentX = clientX;
+            this.mouseSteer.currentY = clientY;
+            this.mouseSteer.steerValue = 0.0;
+            this.updateMouseSteerUI(true);
+        };
+
+        const onDragMove = (clientX, clientY) => {
+            if (!this.mouseSteer.isDragging) return;
+            this.mouseSteer.currentX = clientX;
+            this.mouseSteer.currentY = clientY;
+            const dx = clientX - this.mouseSteer.startX;
+            const maxDrag = 130.0; // 130 pixels for 100% full steering lock
+            let raw = Math.max(-1.0, Math.min(1.0, dx / maxDrag));
+            // Non-linear response curve for fine center corrections and smooth response
+            this.mouseSteer.steerValue = Math.sign(raw) * Math.pow(Math.abs(raw), 1.15);
+            this.updateMouseSteerUI(true);
+        };
+
+        const onDragEnd = () => {
+            if (!this.mouseSteer.isDragging) return;
+            this.mouseSteer.isDragging = false;
+            this.mouseSteer.steerValue = 0.0;
+            this.updateMouseSteerUI(false);
+        };
+
+        window.addEventListener('mousedown', (e) => {
+            if (e.button !== 0) return; // Left mouse button only
+            // Don't intercept button clicks on HUD elements
+            if (e.target && e.target.closest && e.target.closest('.controls-panel, .minimap-wrapper, .touch-controls, button')) return;
+            onDragStart(e.clientX, e.clientY);
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            onDragMove(e.clientX, e.clientY);
+        });
+
+        window.addEventListener('mouseup', (e) => {
+            if (e.button === 0) onDragEnd();
+        });
+
+        // Touch drag steering on viewport
+        const canvas = document.getElementById('renderCanvas');
+        if (canvas) {
+            canvas.addEventListener('touchstart', (e) => {
+                if (e.touches.length > 0) {
+                    const t = e.touches[0];
+                    onDragStart(t.clientX, t.clientY);
+                }
+            }, { passive: true });
+
+            canvas.addEventListener('touchmove', (e) => {
+                if (this.mouseSteer.isDragging && e.touches.length > 0) {
+                    const t = e.touches[0];
+                    onDragMove(t.clientX, t.clientY);
+                }
+            }, { passive: true });
+
+            canvas.addEventListener('touchend', () => {
+                onDragEnd();
+            });
+        }
+    }
+
+    updateMouseSteerUI(visible) {
+        if (!this.uiSteerIndicator) return;
+        if (!visible || !this.mouseSteer.isDragging) {
+            this.uiSteerIndicator.style.display = 'none';
+            return;
+        }
+
+        this.uiSteerIndicator.style.display = 'block';
+        const sx = this.mouseSteer.startX;
+        const sy = this.mouseSteer.startY;
+        const cx = this.mouseSteer.currentX;
+        const cy = this.mouseSteer.currentY;
+
+        this.uiSteerIndicator.style.left = `${sx}px`;
+        this.uiSteerIndicator.style.top = `${sy}px`;
+
+        const dx = cx - sx;
+        const dy = cy - sy;
+        const dist = Math.hypot(dx, dy);
+        const angle = Math.atan2(dy, dx);
+
+        if (this.uiSteerLine) {
+            this.uiSteerLine.style.width = `${dist}px`;
+            this.uiSteerLine.style.transform = `rotate(${angle}rad)`;
+        }
+
+        if (this.uiSteerPointer) {
+            this.uiSteerPointer.style.transform = `translate(${dx}px, ${dy}px)`;
+        }
+
+        if (this.uiSteerBadge) {
+            const pct = Math.round(Math.abs(this.mouseSteer.steerValue) * 100);
+            if (Math.abs(this.mouseSteer.steerValue) < 0.04) {
+                this.uiSteerBadge.innerText = '• RETT FRAM •';
+                this.uiSteerBadge.style.color = '#00ffcc';
+            } else if (this.mouseSteer.steerValue < 0) {
+                this.uiSteerBadge.innerText = `◀ ${pct}% VENSTRE`;
+                this.uiSteerBadge.style.color = '#ffaa00';
+            } else {
+                this.uiSteerBadge.innerText = `HØGRE ${pct}% ▶`;
+                this.uiSteerBadge.style.color = '#ffaa00';
+            }
+        }
+    }
+
     setupTouchControls() {
         const bindTouch = (id, key) => {
             const btn = document.getElementById(id);
@@ -171,7 +300,7 @@ class GameLoop {
 
         const btnCam = document.getElementById('btnCam');
         if (btnCam) {
-            btnCam.innerText = '🎥 KAMERA: HELI SKRÅTT';
+            btnCam.innerText = '🎥 KAMERA: HELI BAKFRA';
             btnCam.addEventListener('click', () => this.cycleCamera());
         }
 
@@ -194,7 +323,7 @@ class GameLoop {
         const labels = {
             chase: 'CHASE',
             hood: 'PANSER',
-            heli_chase: 'HELI SKRÅTT',
+            heli_chase: 'HELI BAKFRA',
             heli_top: 'HELI TOPP'
         };
         const btn = document.getElementById('btnCam');
@@ -250,22 +379,23 @@ class GameLoop {
             this.camTarget.set(car.x + fx * lookAhead, car.y + 0.8 + pitchOffset, car.z + fz * lookAhead);
             this.camModeChanged = false;
         } else if (mode === 'heli_chase') {
-            // Lazy diagonal helicopter chase camera ("skrått bakfra, høyt oppe, litt lazy")
-            const rx = Math.cos(car.yaw);
-            const rz = -Math.sin(car.yaw);
+            // Helicopter camera: straight behind, closer to car, and elevated above car (~47 deg pitch down)
             const speedRatio = car.speed / car.maxSpeed;
-            const distBack = 22.0 + speedRatio * 8.0;
-            const distSide = 10.0 + speedRatio * 4.0;
-            const baseHeliHeight = 18.0 + speedRatio * 6.0;
+            // Closer to the car: 13.5m - 18.0m (was 22m - 30m)
+            const distBack = 13.5 + speedRatio * 4.5;
+            // More above the car: 14.0m - 18.0m (was 18m - 24m at 30m distance)
+            const baseHeliHeight = 14.0 + speedRatio * 4.0;
 
-            const idealCamX = car.x - fx * distBack + rx * distSide;
-            const idealCamZ = car.z - fz * distBack + rz * distSide;
+            // Straight behind car (no lateral side offset)
+            const idealCamX = car.x - fx * distBack;
+            const idealCamZ = car.z - fz * distBack;
             const groundUnderCam = this.terrain ? this.terrain.getHeight(idealCamX, idealCamZ) : car.y;
-            const idealCamY = Math.max(car.y + baseHeliHeight, groundUnderCam + 12.0);
+            const idealCamY = Math.max(car.y + baseHeliHeight, groundUnderCam + 7.5);
 
-            const lookAhead = 4.0 + car.speed * 0.25;
+            // Look-ahead target down the road ahead of the car
+            const lookAhead = 8.0 + car.speed * 0.25;
             const targetX = car.x + fx * lookAhead;
-            const targetY = car.y + 1.2;
+            const targetY = car.y + 1.0;
             const targetZ = car.z + fz * lookAhead;
 
             if (this.camModeChanged || Math.hypot(this.camPos.x - idealCamX, this.camPos.z - idealCamZ) > 50.0) {
@@ -273,13 +403,13 @@ class GameLoop {
                 this.camTarget.set(targetX, targetY, targetZ);
                 this.camModeChanged = false;
             } else {
-                // Smooth, lazy cinematic tracking
-                const lazyPosRate = Math.min(1.0, dt * 2.2);
+                // Smooth, elevated helicopter tracking damping
+                const lazyPosRate = Math.min(1.0, dt * 3.5);
                 this.camPos.x += (idealCamX - this.camPos.x) * lazyPosRate;
-                this.camPos.y += (idealCamY - this.camPos.y) * Math.min(1.0, dt * 1.8);
+                this.camPos.y += (idealCamY - this.camPos.y) * Math.min(1.0, dt * 2.8);
                 this.camPos.z += (idealCamZ - this.camPos.z) * lazyPosRate;
 
-                const lazyTargetRate = Math.min(1.0, dt * 3.5);
+                const lazyTargetRate = Math.min(1.0, dt * 4.5);
                 this.camTarget.x += (targetX - this.camTarget.x) * lazyTargetRate;
                 this.camTarget.y += (targetY - this.camTarget.y) * lazyTargetRate;
                 this.camTarget.z += (targetZ - this.camTarget.z) * lazyTargetRate;
@@ -364,6 +494,10 @@ class GameLoop {
             let steer = 0.0;
             if (this.keys.left) steer -= 1.0;
             if (this.keys.right) steer += 1.0;
+            // Mouse drag steering input takes precedence when active
+            if (this.mouseSteer && this.mouseSteer.isDragging) {
+                steer = this.mouseSteer.steerValue;
+            }
             const handbrake = this.keys.handbrake;
 
             // 2. Physics Update

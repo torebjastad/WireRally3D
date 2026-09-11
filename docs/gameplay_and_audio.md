@@ -16,9 +16,12 @@ Etappen følgjer den asfalterte hovudvegen gjennom heile Årølia (Årølivegen)
 ## 2. Førar-HUD og Instrumentpanel
 Plassert nede til høgre, i midten og oppe til venstre:
 
+### Mus-Styring HUD-Indikator (`#mouseSteerIndicator`)
+- Ved klikk og draing med venstre museknapp visest eit holografisk sikte med drag-linje, retningspeikar og live prosentvis styrevinkel (`◀ 45% VENSTRE` / `HØGRE 60% ▶`).
+
 ### Off-Road Åtvaringsbanner (`#offroadWarning`)
 - Når bilen rullar utanfor asfaltvegen, kjem det opp eit blinkande oransje og raudt åtvaringsskilt i midten av skjermen: `⚠️ UTANFOR VEGEN`.
-- Skiltet indikerer at motoren er kutta og grasrullemotstanden bremsar bilen.
+- Skiltet indikerer at bilen er utanfor vegen og grasrullemotstanden reduserer farten.
 
 ### Speedometer og Turtall
 - **Kalibrert Fartsmåling ($v \times 2.2$):**

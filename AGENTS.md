@@ -66,6 +66,9 @@ Kvar iterasjon i prosjektet er basert på eksplisitte instruksjonar frå brukare
 12. **Mindre brutal off-road brems:**
     - *Brukar:* "It is slowing down too much outside road now."
     - *Løysing:* Fysikkjustering av off-road-modellen: reduserte grasdrag frå 14.0 til 4.5 m/s², fjerna den kunstige avkappinga av framoverhastigheit (`vFwd = min(effectiveMaxSpeed, vFwd)`) slik at nedbremsing skjer naturleg via krefter, auka vegskuldertoleransen frå 1.2m til 1.8m slik at vanlege kurvekutt ikkje brått utløyser grasstraff, senka innrullingsfarten for `offRoadRatio` til `dt * 4.0`, og tillèt motoren å halde opptil 20–25 m/s (~60–75 km/h HUD) i graset med minst 25 % motorkraft i reserve.
+13. **Mus-Draing Styring og Justert Helikopterkamera:**
+    - *Brukar:* "I am also considering a steering mechanism that steers by left clicking and dragging the mouse. I think that will give more control. Also the camera following the car in the helicpotermode above and behind needs to be straight behind car, a little bit closer to the car and a little more above the care (not directly above)"
+    - *Løysing:* Implementerte kontinuerleg analog styring ved å klikke og dra venstre museknapp (eller touch-dra på skjerm) med felles target-integrator, dynamisk drag-sikte og prosentvis HUD-vinkelindikator. Oppdaterte `heli_chase` (Heli Bakfra): fjerna sideforskyving for å plassere kameraet rett bak bilen, reduserte avstand frå 22–30m til 13.5–18m (nærare), og auka helningsvinkelen til ~47° (meir opphøgd over taket) med siktepunkt 8m framfor bilen for ideell køyresikt.
 
 ---
 

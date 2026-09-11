@@ -22,14 +22,15 @@ Viss eit linjesegment frå $\mathbf{P}_1$ til $\mathbf{P}_2$ kryssar kameras næ
 ## 3. Kameramodusar
 Spelet har 4 kameramodusar som kan vekslast med `C`-tasten:
 
-### 1. Heli Skrått (`heli_chase`) — STANDARD
-- **WRC TV-helikopter:** Posisjonert skrått bak bilen for spektakulær oversikt over heile vegen og landskapet.
+### 1. Heli Bakfra (`heli_chase`) — STANDARD
+- **Opphøgd helikopterkamera rett bak bilen:** Posisjonert rett bak køyretøyet, nærare bilen og høgare oppe (~$47^\circ$ helningsvinkel nedover) for optimal oversikt over bilen og vegbanen framover.
 - **Geometri:**
-  - Avstand bak: $22.0 + (\text{speedRatio} \times 8.0) \text{ meter}$
-  - Sideforskyving: $10.0 + (\text{speedRatio} \times 4.0) \text{ meter}$
-  - Høgde: $18.0 + (\text{speedRatio} \times 6.0) \text{ meter}$ (med minimum $12 \text{ meter}$ bakkeklaring mot åssidene).
+  - Avstand bak: $13.5 + (\text{speedRatio} \times 4.5) \text{ meter}$ (nærare enn tidlegare, var 22–30m).
+  - Sideforskyving: $0.0 \text{ meter}$ (rett bak bilen, ingen sideforskyving).
+  - Høgde: $14.0 + (\text{speedRatio} \times 4.0) \text{ meter}$ (gjev eit tydeleg opphøgd innsyn ned over biltaket, med minimum $7.5 \text{ meter}$ bakkeklaring mot åssidene).
+  - Siktepunkt: $8.0 + (\text{speed} \times 0.25) \text{ meter}$ framfor bilen langs køyrelinja.
 - **Kinematisk demping (Cinematic damping):**
-  Kameraet følgjer ikkje stivt etter hekken, men har simulert aerodynamisk tregleik (`dt * 2.2` på posisjon, `dt * 3.5` på siktepunkt). Når bilen kastar seg inn i ein brekksladd, glir kameraet nydeleg rundt i ei mjuk boge.
+  Kameraet følgjer med simulert aerodynamisk demping (`dt * 3.5` på posisjon, `dt * 4.5` på siktepunkt). Når bilen kastar seg inn i ein brekksladd eller sving, svingar kameraet nydeleg og stabilt rett bak bilen utan å miste fokus.
 
 ### 2. Chase (`chase`)
 - Dynamisk 3. persons rally-kamera 6–9 meter bak bilen.
