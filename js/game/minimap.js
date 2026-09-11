@@ -53,7 +53,7 @@ class HUDMinimap {
             ctx.stroke();
         });
 
-        // 2. Draw Road Network
+        // 2. Draw Road Network (All roads unified in glowing green)
         this.roads.forEach(r => {
             const pts = r.points;
             if (pts.length < 2) return;
@@ -64,14 +64,17 @@ class HUDMinimap {
                 const pt = this.worldToMapPx(pts[i].x, pts[i].z);
                 ctx.lineTo(pt.x, pt.y);
             }
+            if (r.is_closed) {
+                ctx.closePath();
+            }
 
             if (r.priority >= 3) {
                 // Årølivegen main artery
-                ctx.strokeStyle = 'rgba(0, 255, 200, 0.85)';
+                ctx.strokeStyle = 'rgba(0, 255, 204, 0.9)';
                 ctx.lineWidth = 2.2;
             } else {
-                ctx.strokeStyle = 'rgba(0, 150, 220, 0.45)';
-                ctx.lineWidth = 1.0;
+                ctx.strokeStyle = 'rgba(0, 255, 204, 0.55)';
+                ctx.lineWidth = 1.2;
             }
             ctx.stroke();
         });

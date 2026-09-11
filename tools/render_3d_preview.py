@@ -94,25 +94,36 @@ def render_3d_preview():
             p2 = (verts[j+1][i]["x"], verts[j+1][i]["y"], verts[j+1][i]["z"])
             draw_3d_line(p1, p2, grid_color, 1)
 
-    # 2. Roads
+    # 2. Roads (Continuous Gapless Ribbons)
+    col = (0, 255, 204)
+    center_col = (255, 234, 117)
     for r in roads:
-        pts = r["points"]
-        half_w = r["width"] * 0.5
         is_main = r["priority"] >= 3
-        col = (0, 255, 204) if is_main else (0, 153, 255)
-        for i in range(len(pts) - 1):
-            a, b = pts[i], pts[i+1]
-            dx = b["x"] - a["x"]
-            dz = b["z"] - a["z"]
-            l = math.hypot(dx, dz) or 1.0
-            nx = -dz / l * half_w
-            nz =  dx / l * half_w
-            # Left curb
-            draw_3d_line((a["x"] + nx, a["y"] + 0.1, a["z"] + nz),
-                         (b["x"] + nx, b["y"] + 0.1, b["z"] + nz), col, 2 if is_main else 1)
-            # Right curb
-            draw_3d_line((a["x"] - nx, a["y"] + 0.1, a["z"] - nz),
-                         (b["x"] - nx, b["y"] + 0.1, b["z"] - nz), col, 2 if is_main else 1)
+        curb_w = 2 if is_main else 1
+        lc = r.get("left_curb")
+        rc = r.get("right_curb")
+        pts = r.get("points", [])
+
+        if lc and rc and len(lc) >= 2:
+            N = len(lc)
+            for i in range(N - 1):
+                draw_3d_line((lc[i]["x"], lc[i]["y"], lc[i]["z"]),
+                             (lc[i+1]["x"], lc[i+1]["y"], lc[i+1]["z"]), col, curb_w)
+                draw_3d_line((rc[i]["x"], rc[i]["y"], rc[i]["z"]),
+                             (rc[i+1]["x"], rc[i+1]["y"], rc[i+1]["z"]), col, curb_w)
+                if is_main and (i % 2 == 0):
+                    draw_3d_line((pts[i]["x"], pts[i]["y"], pts[i]["z"]),
+                                 (pts[i+1]["x"], pts[i+1]["y"], pts[i+1]["z"]), center_col, 1)
+
+            if r.get("is_closed"):
+                draw_3d_line((lc[N-1]["x"], lc[N-1]["y"], lc[N-1]["z"]),
+                             (lc[0]["x"], lc[0]["y"], lc[0]["z"]), col, curb_w)
+                draw_3d_line((rc[N-1]["x"], rc[N-1]["y"], rc[N-1]["z"]),
+                             (rc[0]["x"], rc[0]["y"], rc[0]["z"]), col, curb_w)
+        else:
+            for i in range(len(pts) - 1):
+                draw_3d_line((pts[i]["x"], pts[i]["y"], pts[i]["z"]),
+                             (pts[i+1]["x"], pts[i+1]["y"], pts[i+1]["z"]), col, curb_w)
 
     # 3. Buildings
     for b in buildings:

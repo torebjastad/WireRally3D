@@ -150,50 +150,43 @@ class WireframeRenderer {
             }
         }
 
-        // 2. ROAD NETWORK (Glowing Ribbons, Curbs & Centerlines)
+        // 2. ROAD NETWORK (Continuous Ribbons, Gapless Curbs & Glowing Centerlines)
         if (roads) {
+            const roadColor = '#00ffcc'; // Unified vibrant neon cyber green for all roads (main and small alike)
+            const centerColor = '#ffea75'; // Cyber amber dashed centerline for main arteries
+
             roads.forEach(r => {
                 const pts = r.points;
-                if (pts.length < 2) return;
-                const halfW = r.width * 0.5;
+                if (!pts || pts.length < 2) return;
                 const isMain = (r.priority >= 3);
-                const roadColor = isMain ? '#00ffcc' : '#0099ff';
-                const centerColor = '#ffffaa';
+                const curbWidth = isMain ? 2.2 : 1.5;
+                const maxDist = isMain ? 800.0 : 650.0;
 
-                for (let i = 0; i < pts.length - 1; i++) {
-                    const a = pts[i];
-                    const b = pts[i + 1];
+                const leftCurb = r.left_curb;
+                const rightCurb = r.right_curb;
 
-                    // Perpendicular vector in XZ plane
-                    const dx = b.x - a.x;
-                    const dz = b.z - a.z;
-                    const len = Math.hypot(dx, dz) || 1.0;
-                    const nx = -dz / len * halfW;
-                    const nz =  dx / len * halfW;
+                if (leftCurb && rightCurb && leftCurb.length >= 2) {
+                    const N = leftCurb.length;
+                    // Render unbroken, continuous curbs along the polyline
+                    for (let i = 0; i < N - 1; i++) {
+                        draw3DLine(leftCurb[i], leftCurb[i + 1], roadColor, curbWidth, maxDist);
+                        draw3DLine(rightCurb[i], rightCurb[i + 1], roadColor, curbWidth, maxDist);
 
-                    // Terrain-following curb elevation with +0.22m offset to prevent ground sinking
-                    const yAL = terrain ? terrain.getHeight(a.x + nx, a.z + nz) + 0.22 : a.y + 0.22;
-                    const yBL = terrain ? terrain.getHeight(b.x + nx, b.z + nz) + 0.22 : b.y + 0.22;
-                    const yAR = terrain ? terrain.getHeight(a.x - nx, a.z - nz) + 0.22 : a.y + 0.22;
-                    const yBR = terrain ? terrain.getHeight(b.x - nx, b.z - nz) + 0.22 : b.y + 0.22;
+                        // Dashed centerline for main roads
+                        if (isMain && (i % 2 === 0)) {
+                            draw3DLine(pts[i], pts[i + 1], centerColor, 1.4, 600.0);
+                        }
+                    }
 
-                    // Left curb
-                    const aL = new Vector3(a.x + nx, yAL, a.z + nz);
-                    const bL = new Vector3(b.x + nx, yBL, b.z + nz);
-                    draw3DLine(aL, bL, roadColor, isMain ? 2.2 : 1.4, 750.0);
-
-                    // Right curb
-                    const aR = new Vector3(a.x - nx, yAR, a.z - nz);
-                    const bR = new Vector3(b.x - nx, yBR, b.z - nz);
-                    draw3DLine(aR, bR, roadColor, isMain ? 2.2 : 1.4, 750.0);
-
-                    // Dashed centerline for main roads
-                    if (isMain && (i % 2 === 0)) {
-                        const yAC = terrain ? terrain.getHeight(a.x, a.z) + 0.25 : a.y + 0.25;
-                        const yBC = terrain ? terrain.getHeight(b.x, b.z) + 0.25 : b.y + 0.25;
-                        const aC = new Vector3(a.x, yAC, a.z);
-                        const bC = new Vector3(b.x, yBC, b.z);
-                        draw3DLine(aC, bC, centerColor, 1.4, 600.0);
+                    // Seamlessly close roundabouts
+                    if (r.is_closed) {
+                        draw3DLine(leftCurb[N - 1], leftCurb[0], roadColor, curbWidth, maxDist);
+                        draw3DLine(rightCurb[N - 1], rightCurb[0], roadColor, curbWidth, maxDist);
+                    }
+                } else {
+                    // Fallback: draw centerline if curbs are not precomputed
+                    for (let i = 0; i < pts.length - 1; i++) {
+                        draw3DLine(pts[i], pts[i + 1], roadColor, curbWidth, maxDist);
                     }
                 }
             });
