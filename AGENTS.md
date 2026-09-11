@@ -75,6 +75,9 @@ Kvar iterasjon i prosjektet er basert på eksplisitte instruksjonar frå brukare
 15. **Tastatur- og mus-isolasjon i tekstfelt (Søking etter stader):**
     - *Brukar:* "Når eg skriv in stedsnavn for å velge fritt kart, so kan eg ikkje bruke w a s d fordi dei er låst til styringa av bilen..."
     - *Løysing:* Oppdaterte `setupInputs()` og `setupMouseSteering()` i `js/game/gameLoop.js` til å sjekke om hendinga kjem frå eit tekstfelt (`INPUT`, `TEXTAREA` eller `contenteditable`). Køyretastane (W, A, S, D, Space, R, C, T, M) og `preventDefault()` vert omgått slik at alle teikn kan skrivast uforstyrra i søkeboksen. `clearKeys()` nullstiller alle køyretastar ved modalopning og feltfokus, og musestyring vert blokkert ved klikk inne i modalen.
+16. **Usynlege Kollisjonar Fiksa (Polygon-basert Kollisjonsdeteksjon):**
+    - *Brukar:* "Sometimes the car crashes with something invisible in the terrain.. possbile to make som changes to avoid that?"
+    - *Løysing:* Erstatta den reine AABB-kollisjonsdeteksjonen med eit 3-stegs system i `js/engine/physics.js`: (1) Filtrerer ut bygningar med areal under 4 m² (shoelace-formel), slik at bittesmå skur, murar og utstikk ikkje lagar fantomkollisjonar. (2) Reduserte AABB-padding frå 0.8m til 0.3m og set `baseY` til minimum 1.5m over terrenget, slik at låge bygningar ikkje fangar bilen ved bakkenivå. (3) La til ein ray-casting punkt-i-polygon-test (`pointInPolygon`) som køyrer etter AABB early-reject og høgdesjekk, slik at uregulære bygningsformer (L-form, trekantar osv.) ikkje utløyser kollisjon utanfor det faktiske fotavtrykket.
 
 ---
 

@@ -27,18 +27,43 @@ class RallyCarPhysics {
     }
 
     prepareBuildings(buildings) {
-        return buildings.map(b => {
-            const xs = b.polygon.map(p => p.x);
-            const zs = b.polygon.map(p => p.z);
-            return {
-                xMin: Math.min(...xs) - 0.8,
-                xMax: Math.max(...xs) + 0.8,
-                zMin: Math.min(...zs) - 0.8,
-                zMax: Math.max(...zs) + 0.8,
-                baseY: b.base_y,
-                topY: b.base_y + b.height
-            };
-        });
+        const result = [];
+        for (let i = 0; i < buildings.length; i++) {
+            const b = buildings[i];
+            if (!b.polygon || b.polygon.length < 3) continue;
+
+            // Compute polygon area using the shoelace formula; skip tiny structures
+            const poly = b.polygon;
+            let area = 0;
+            for (let j = 0; j < poly.length; j++) {
+                const k = (j + 1) % poly.length;
+                area += poly[j].x * poly[k].z - poly[k].x * poly[j].z;
+            }
+            area = Math.abs(area) * 0.5;
+            if (area < 4.0) continue; // Skip buildings smaller than 4 m²
+
+            const xs = poly.map(p => p.x);
+            const zs = poly.map(p => p.z);
+            const pad = 0.3; // Reduced padding (was 0.8m) — less phantom overshoot
+
+            // Ensure baseY is at least 1.5m above ground to prevent ground-level phantom hits
+            const terrainH = this.terrain ? this.terrain.getHeight(
+                (Math.min(...xs) + Math.max(...xs)) * 0.5,
+                (Math.min(...zs) + Math.max(...zs)) * 0.5
+            ) : 0;
+            const effectiveBaseY = Math.max(b.base_y, terrainH + 1.5);
+
+            result.push({
+                xMin: Math.min(...xs) - pad,
+                xMax: Math.max(...xs) + pad,
+                zMin: Math.min(...zs) - pad,
+                zMax: Math.max(...zs) + pad,
+                baseY: effectiveBaseY,
+                topY: effectiveBaseY + b.height,
+                polygon: poly // Store for point-in-polygon test
+            });
+        }
+        return result;
     }
 
     prepareRoads(roads) {
@@ -339,26 +364,44 @@ class RallyCarPhysics {
         this.collisionSpark = null;
         for (let i = 0; i < this.buildingObstacles.length; i++) {
             const b = this.buildingObstacles[i];
-            if (this.x >= b.xMin && this.x <= b.xMax && this.z >= b.zMin && this.z <= b.zMax) {
-                if (this.y >= b.baseY - 0.5 && this.y <= b.topY) {
-                    // Collision detected! Bounce back
-                    const cx = (b.xMin + b.xMax) / 2;
-                    const cz = (b.zMin + b.zMax) / 2;
-                    const dx = this.x - cx;
-                    const dz = this.z - cz;
-                    const dist = Math.hypot(dx, dz) || 1.0;
+            // Fast AABB early reject
+            if (this.x < b.xMin || this.x > b.xMax || this.z < b.zMin || this.z > b.zMax) continue;
+            // Height check
+            if (this.y < b.baseY - 0.5 || this.y > b.topY) continue;
+            // Point-in-polygon ray-cast test (XZ plane)
+            if (!this.pointInPolygon(this.x, this.z, b.polygon)) continue;
 
-                    this.x += (dx / dist) * 1.5;
-                    this.z += (dz / dist) * 1.5;
-                    this.vx *= -0.3;
-                    this.vz *= -0.3;
-                    this.yawRate *= -0.5;
+            // Collision detected! Bounce back
+            const cx = (b.xMin + b.xMax) / 2;
+            const cz = (b.zMin + b.zMax) / 2;
+            const dx = this.x - cx;
+            const dz = this.z - cz;
+            const dist = Math.hypot(dx, dz) || 1.0;
 
-                    this.collisionSpark = { x: this.x, y: this.y + 0.5, z: this.z };
-                    break;
-                }
+            this.x += (dx / dist) * 1.5;
+            this.z += (dz / dist) * 1.5;
+            this.vx *= -0.3;
+            this.vz *= -0.3;
+            this.yawRate *= -0.5;
+
+            this.collisionSpark = { x: this.x, y: this.y + 0.5, z: this.z };
+            break;
+        }
+    }
+
+    // Ray-casting point-in-polygon test (XZ plane, works for any simple polygon)
+    pointInPolygon(px, pz, polygon) {
+        let inside = false;
+        const n = polygon.length;
+        for (let i = 0, j = n - 1; i < n; j = i++) {
+            const xi = polygon[i].x, zi = polygon[i].z;
+            const xj = polygon[j].x, zj = polygon[j].z;
+            if ((zi > pz) !== (zj > pz) &&
+                px < (xj - xi) * (pz - zi) / (zj - zi) + xi) {
+                inside = !inside;
             }
         }
+        return inside;
     }
 }
 

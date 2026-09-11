@@ -114,4 +114,22 @@ For å sikre at rallysjåføren må halde seg på vegen for å oppretthalde fart
    - **Sleipare underlag:**
      Sidegrepet vert redusert frå $30.0$ til $22.0$. Bilen kjennest lett og laus på graset, men beheld god styreevne til å svinge inn på asfalten att.
 
+---
 
+## 8. Bygningskollisjon (Polygon-basert)
+
+Bygningskollisjonen i [`physics.js`](file:///c:/Users/toreb/OneDrive/Code/ÅrøliaRally/js/engine/physics.js) nyttar eit 3-stegs deteksjonssystem:
+
+1. **Filtrering (`prepareBuildings`):**
+   - Bygningar med polygon-areal under $4\text{ m}^2$ (berekna med shoelace-formelen) vert filtrerte ut for å eliminere fantomkollisjonar frå bittesmå skur, murar og tekniske polygonrestar.
+   - AABB-padding er redusert til $0.3\text{ m}$ (tidlegare $0.8\text{ m}$) for tettare tilpassing til det faktiske fotavtrykket.
+   - `baseY` vert sett til minimum $1.5\text{ m}$ over terrenget i bygningens senterpunkt, slik at låge strukturar (garasjar, kjellarar) ikkje fangar bilen ved bakkenivå.
+
+2. **Rask AABB Early-Reject:**
+   Berre bygningar der bilens $(x, z)$ ligg innanfor den (reduserte) AABB-boksen og bilens $y$ er mellom $\text{baseY} - 0.5$ og $\text{topY}$ vert sendt vidare til polygon-testen.
+
+3. **Punkt-i-polygon Ray-Casting Test (`pointInPolygon`):**
+   Ein klassisk ray-casting-algoritme i XZ-planet tel kor mange gongar ein horisontal stråle frå $(x, z)$ kryssar polygonkantane. Berre odde kryssingstal = inne i bygningen. Dette eliminerer alle falske treff frå L-forma, trekantar og andre uregulære bygningsformer som AABB-en overrapporterer.
+
+4. **Elastisk Sprettrespons:**
+   Ved detektert kollisjon vert bilen dytta $1.5\text{ m}$ vekk frå AABB-senteret, farten vert reversert med $30\%$ effekt ($v \times -0.3$) og yaw-rate vert dempa ($\times -0.5$). Ein visuell kollisjonsgneist vert plassert for HUD-tilbakemelding.
