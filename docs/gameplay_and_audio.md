@@ -1,0 +1,51 @@
+# Gameplay, HUD og Lyd — Årølia Rally 3D
+
+## 1. Rallyetappen: Årøhallen til Årølia Skole
+Etappen følgjer den hovudsaklege vegen gjennom heile Årølia:
+- **Start:** Ved Årøhallen ($X = -850, Z = -340$)
+- **Trasé:** Gjennom Kringstadstien, forbi bustadfeltet, gjennom midt-rundkøyringa i Årølivegen og opp bakken mot aust.
+- **Mål:** Ved Årølia skole ($X = 625, Z = 88$)
+- **Sjekkpunkt:** 9 sjekkpunktportar (`data/rally_track.json`) som må passerast i rekkjefølgje.
+- **Målgang & Tider:**
+  - Viser live tidtaking i formatet `M:SS.ss`.
+  - Split-tider og sektor-meldinger i stort HUD-banner.
+  - Beste tid lagrast lokalt per økt.
+
+---
+
+## 2. Førar-HUD og Instrumentpanel
+Plassert nede til høgre og oppe til venstre for uforstyrra sikt:
+
+### Speedometer og Turtall
+- **Kalibrert Fartsmåling ($v \times 2.2$):**
+  Speedometeret viser hastigheit i km/h tilpassa kartets pikselmålestokk og augas oppleving frå helikopterkameraet:
+  - Rundkøyringar: ~25–35 km/h
+  - Bustadgater: ~45–65 km/h
+  - Raske strekk: ~110–140 km/h
+  - Toppfart: ~180–185 km/h (svarar til ein ekte WRC-bil)
+- **Gir-indikator:** Viser `R`, `N`, `1`, `2`, `3`, `4`, `5`.
+- **Turtalsbar (Tachometer):**
+  Dynamisk fargeindikator som skiftar farge mot raudlinja:
+  - Normal: Grøn/Cyan (`#00ffcc`)
+  - Høgt turtall (> 70 %): Oransje (`#ffaa00`)
+  - Turtallskutt (> 88 %): Raud (`#ff0055`)
+
+---
+
+## 3. 2D GPS-Minikart (`minimap.js`)
+Plassert oppe til venstre:
+- **Kartutsnitt:** Følgjer det eksakte rektangulære utsnittet frå brukarens opphavlege referansebilete.
+- **Skalert Rally-Chevron:** Køyretøyet er markert med ei smekker 5.5-piksels retningspil som roterer nøyaktig med bilens kompasskurs.
+- **Sjekkpunktmarkering:** Aktive og passerte sjekkpunkt lyser opp i gult og grønt.
+
+---
+
+## 4. Prosedyrisk Lydmotor (`audio.js`)
+Spelet nyttar **Web Audio API** utan eksterne lydfiler:
+- **Motorlyd:**
+  - Kombinasjon av sagtagg- (sawtooth) og trekant- (triangle) oscillatorar som vert frekvensmodulerte i sanntid etter bilens RPM ($900 – 7200 \text{ RPM}$).
+  - Waveshaper-forvrenging (distortion) gjev ein rå og metallisk rallybil-tone ved gasspådrag.
+- **Dekkskrik og Sladdelyd:**
+  - Kvit støy generert gjennom eit resonerande bandpassfilter (`BiquadFilterNode`).
+  - Gain vert trigga proporsjonalt med bilens sideslip (`driftSlip`) ved brekksladd og hard bremsing.
+- **Lydkontroll:** Kan slåast av/på med `M`-tasten.
