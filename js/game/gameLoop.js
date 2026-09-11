@@ -306,11 +306,8 @@ class GameLoop {
     }
 
     updateUI() {
-        // Calibrate speed measurement to match real-world car dimensions (4.2m) and map scale (1.61m/px)
-        // Instantaneous coordinate speed is in world units (m/s).
-        // Calibrated factor 2.2 accounts for the visual map scale (3.6 / 1.61 ≈ 2.23), giving accurate real-world
-        // speed readouts matching the visual traversal past 4.2m car lengths and 12m houses.
-        const speedKmh = Math.round(this.carPhysics.speed * 2.2);
+        // Vehicle speed in real-world km/h (1 m/s = 3.6 km/h)
+        const speedKmh = Math.round(this.carPhysics.speed * 3.6);
         if (this.uiSpeed) this.uiSpeed.innerText = speedKmh;
 
         if (this.uiGear) {

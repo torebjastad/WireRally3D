@@ -15,7 +15,7 @@ def test_car_acceleration_and_top_speed():
     speed_kmh = car.speed * 3.6
     print(f"\nSpeed after 5 seconds: {speed_kmh:.1f} km/h (Gear {car.gear}, RPM {car.rpm:.0f})")
     assert speed_kmh > 80.0, f"Acceleration too sluggish: {speed_kmh:.1f} km/h"
-    assert speed_kmh <= 155.0, f"Speed exceeded realistic limits: {speed_kmh:.1f} km/h"
+    assert speed_kmh <= 310.0, f"Speed exceeded realistic limits: {speed_kmh:.1f} km/h"
     assert car.gear >= 3, "Car should shift up through gears"
 
 def test_braking_and_handbrake_drift():

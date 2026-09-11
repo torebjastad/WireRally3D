@@ -10,8 +10,8 @@ class RallyCarPhysics {
         this.width = 1.8;
         this.length = 4.2;
         this.maxSteer = 35.0 * Math.PI / 180.0;
-        this.maxSpeed = 42.0; // m/s (~151 km/h)
-        this.topGearSpeeds = [0.0, 12.0, 22.0, 31.0, 38.0, 45.0];
+        this.maxSpeed = 84.0; // m/s (~302 km/h, doubled from 42.0 m/s)
+        this.topGearSpeeds = [0.0, 24.0, 44.0, 62.0, 76.0, 90.0];
         this.gravity = 9.81;
 
         // Collision bounding boxes for buildings
@@ -170,25 +170,25 @@ class RallyCarPhysics {
         this.rpm += (targetRpm - this.rpm) * Math.min(1.0, dt * 10.0);
 
         // Driving forces
-        let accelForce = throttle * 15.0 * gearRatio;
+        let accelForce = throttle * 24.0 * gearRatio;
         if (brake > 0 && vFwd < 0.2 && throttle === 0) {
             // Reverse drive
-            accelForce = -brake * 7.5;
+            accelForce = -brake * 10.0;
             brake = 0;
             this.gear = -1;
         }
 
-        let brakeForce = brake * 24.0;
-        const rollingResistance = 0.5 + 0.02 * Math.abs(vFwd);
+        let brakeForce = brake * 36.0;
+        const rollingResistance = 0.5 + 0.015 * Math.abs(vFwd);
         const slopeResistance = Math.sin(this.pitch) * this.gravity;
 
         const netFwdAccel = accelForce - (vFwd !== 0 ? Math.sign(vFwd) * brakeForce : 0) - (vFwd !== 0 ? Math.sign(vFwd) * rollingResistance : 0) - slopeResistance;
 
         // Lateral grip & drift physics
-        let gripFactor = 28.0;
+        let gripFactor = 30.0;
         if (handbrake) {
-            gripFactor = 5.5; // Reduced grip initiates drift slide!
-            brakeForce += 14.0;
+            gripFactor = 6.0; // Reduced grip initiates drift slide!
+            brakeForce += 18.0;
         }
 
         const latAccel = -vLat * gripFactor;
@@ -214,7 +214,7 @@ class RallyCarPhysics {
 
         // Forward integration
         vFwd += netFwdAccel * dt;
-        vFwd = Math.max(-12.0, Math.min(this.maxSpeed, vFwd));
+        vFwd = Math.max(-18.0, Math.min(this.maxSpeed, vFwd));
         vLat += latAccel * dt;
 
         this.vx = vFwd * fx + vLat * rx;
@@ -227,7 +227,7 @@ class RallyCarPhysics {
         // Check hillcrest launch
         const newGroundY = this.terrain ? this.terrain.getHeight(this.x, this.z) : 0.0;
         const drop = groundY - newGroundY;
-        if (drop > 0.4 && Math.abs(vFwd) > 11.0) {
+        if (drop > 0.4 && Math.abs(vFwd) > 16.0) {
             this.isGrounded = false;
             this.vy = Math.max(-1.0, Math.sin(this.pitch) * vFwd);
             this.airTime += dt;

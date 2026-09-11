@@ -11,8 +11,8 @@ class RallyCarPhysics:
         self.mass = 1150.0 # kg
         self.wheelbase = 2.5 # m
         self.max_steer = math.radians(35.0)
-        self.max_speed = 42.0 # m/s (~151 km/h)
-        self.top_gear_speeds = [0.0, 12.0, 22.0, 31.0, 38.0, 45.0] # m/s
+        self.max_speed = 84.0 # m/s (~302 km/h, doubled from 42.0 m/s)
+        self.top_gear_speeds = [0.0, 24.0, 44.0, 62.0, 76.0, 90.0] # m/s
         self.gravity = 9.81
         
     def reset(self, x, z, heading_rad):
@@ -133,9 +133,9 @@ class RallyCarPhysics:
         self.rpm += (target_rpm - self.rpm) * min(1.0, dt * 10.0)
         
         # Driving forces
-        accel_force = throttle * 14.0 * gear_ratio
-        brake_force = brake * 22.0
-        rolling_resistance = 0.6 + 0.02 * abs(v_fwd)
+        accel_force = throttle * 24.0 * gear_ratio
+        brake_force = brake * 36.0
+        rolling_resistance = 0.5 + 0.015 * abs(v_fwd)
         
         # Slope resistance (gravity component along slope)
         slope_resistance = math.sin(self.pitch) * self.gravity
@@ -144,10 +144,10 @@ class RallyCarPhysics:
         net_fwd_accel = accel_force - math.copysign(brake_force, v_fwd if abs(v_fwd) > 0.1 else 1.0) - math.copysign(rolling_resistance, v_fwd) - slope_resistance
         
         # Lateral friction (grip vs drift)
-        grip_factor = 28.0 # lateral grip rate
+        grip_factor = 30.0 # lateral grip rate
         if handbrake:
-            grip_factor = 5.0 # reduced grip = drift!
-            brake_force += 12.0
+            grip_factor = 6.0 # reduced grip = drift!
+            brake_force += 18.0
             
         lat_accel = -v_lat * grip_factor
         self.drift_slip = v_lat
@@ -170,7 +170,7 @@ class RallyCarPhysics:
         
         # Update velocities
         v_fwd += net_fwd_accel * dt
-        v_fwd = max(-10.0, min(self.max_speed, v_fwd))
+        v_fwd = max(-18.0, min(self.max_speed, v_fwd))
         v_lat += lat_accel * dt
         
         # Recombine to world velocity
