@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Årølia Rally 3D - Wireframe Edition</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="gameContainer">
+        <!-- 3D Wireframe Viewport Canvas -->
+        <canvas id="renderCanvas"></canvas>
+
+        <!-- HUD Layer -->
+        <div class="hud-layer">
+            <!-- Top Title -->
+            <div class="top-header">
+                <div class="game-title">ÅRØLIA RALLY 3D</div>
+                <div class="game-subtitle">WIREFRAME MOTORSPORT • MOLDE (WGS84 62.7545°, 7.2847°)</div>
+            </div>
+
+            <!-- Stage Alert Banner -->
+            <div class="stage-banner-box">
+                <div id="bannerNotice">TRYKK PIL OPP / W FOR Å STARTE ETAPPEN</div>
+            </div>
+
+            <!-- Minimap Top Right -->
+            <div class="minimap-wrapper">
+                <canvas id="minimapCanvas" width="280" height="158"></canvas>
+                <div class="minimap-label">KARTUTSNITT: ÅRØLIA</div>
+            </div>
+
+            <!-- Timing HUD Panel -->
+            <div class="timing-panel">
+                <div class="hud-row">
+                    <span class="lbl">TID:</span>
+                    <span class="val highlight" id="valTime">0:00.00</span>
+                </div>
+                <div class="hud-row">
+                    <span class="lbl">BESTE TID:</span>
+                    <span class="val" id="valBest">--:--.--</span>
+                </div>
+                <div class="hud-row">
+                    <span class="lbl">POST:</span>
+                    <span class="val" id="valCheckpoint">0 / 9</span>
+                </div>
+            </div>
+
+            <!-- Speedometer & Tachometer Cluster Bottom Right -->
+            <div class="gauge-cluster">
+                <div class="speed-readout">
+                    <span id="valSpeed">0</span>
+                    <span class="speed-unit">KM/H</span>
+                </div>
+                <div class="gear-display">GIR <span id="valGear">1</span></div>
+                <div class="rpm-bar-container">
+                    <div id="rpmBarFill"></div>
+                </div>
+                <div class="rpm-label"><span id="valRpm">900</span> RPM</div>
+            </div>
+
+            <!-- Toolbar & Controls Bottom Left -->
+            <div class="controls-panel">
+                <div class="action-buttons">
+                    <button class="btn-hud" id="btnReset">🔄 RESET BIL (R)</button>
+                    <button class="btn-hud" id="btnCam">🎥 KAMERA (C)</button>
+                    <button class="btn-hud" id="btnMute">🔊 LYD (M)</button>
+                </div>
+                <div class="help-text">
+                    <strong>KONTROLLAR:</strong><br>
+                    • <b>Gass / Brems:</b> Pil Opp / Ned eller W / S<br>
+                    • <b>Styring:</b> Pil Venstre / Høgste eller A / D<br>
+                    • <b>Brekk-sladd (Drift):</b> SPACE (Mellomrom)<br>
+                    • <b>Kamera:</b> C (Chase / Hood / Heli)<br>
+                    • <b>Start på nytt:</b> T
+                </div>
+            </div>
+
+            <!-- Touch Controls for Mobile / Tablets -->
+            <div class="touch-controls">
+                <div class="touch-cluster-left">
+                    <button class="btn-touch" id="btnTouchLeft">◀</button>
+                    <button class="btn-touch" id="btnTouchRight">▶</button>
+                </div>
+                <div class="touch-cluster-right">
+                    <button class="btn-touch btn-touch-brake" id="btnTouchBrake">DRIFT</button>
+                    <button class="btn-touch" id="btnTouchDown">▼</button>
+                    <button class="btn-touch" id="btnTouchUp">▲</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/data/bundle.js"></script>
+    <script src="js/engine/math3d.js"></script>
+    <script src="js/engine/terrain.js"></script>
+    <script src="js/engine/physics.js"></script>
+    <script src="js/engine/wireframeRenderer.js"></script>
+    <script src="js/engine/audio.js"></script>
+    <script src="js/game/car.js"></script>
+    <script src="js/game/track.js"></script>
+    <script src="js/game/minimap.js"></script>
+    <script src="js/game/gameLoop.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

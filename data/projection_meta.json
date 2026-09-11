@@ -1,0 +1,58 @@
+{
+  "ref_image_width": 1024,
+  "ref_image_height": 576,
+  "origin": {
+    "name": "Mid Roundabout (\u00c5r\u00f8lia sentrum)",
+    "lon": 7.2801607,
+    "lat": 62.7547996,
+    "elev": 62.210609450016534
+  },
+  "m_per_deg_lon": 50962.23383792922,
+  "m_per_deg_lat": 111139.0,
+  "local_to_pixel": {
+    "ax": 0.663353,
+    "bx": -0.361538,
+    "cx": 507.34,
+    "ay": 0.081813,
+    "by": -0.681947,
+    "cy": 205.29
+  },
+  "pixel_to_local": {
+    "ax": 1.61244,
+    "bx": -0.85484,
+    "cx": -642.54,
+    "ay": 0.19344,
+    "by": -1.56847,
+    "cy": 223.82
+  },
+  "landmarks": [
+    {
+      "name": "\u00c5r\u00f8hallen Roundabout",
+      "local_x": -849.13,
+      "local_z": -337.39,
+      "pixel_x": 66,
+      "pixel_y": 366
+    },
+    {
+      "name": "West Roundabout (Kringstadstien)",
+      "local_x": -482.33,
+      "local_z": -30.19,
+      "pixel_x": 198,
+      "pixel_y": 187
+    },
+    {
+      "name": "Mid Roundabout (\u00c5r\u00f8lia sentrum)",
+      "local_x": 0.0,
+      "local_z": 0.01,
+      "pixel_x": 508,
+      "pixel_y": 204
+    },
+    {
+      "name": "East Roundabout (\u00c5r\u00f8lia skole)",
+      "local_x": 625.29,
+      "local_z": 88.03,
+      "pixel_x": 890,
+      "pixel_y": 197
+    }
+  ]
+}

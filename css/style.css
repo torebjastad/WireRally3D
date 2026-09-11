@@ -1,0 +1,325 @@
+/* Retro Cyber Wireframe Styling for Årølia Rally */
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@500;700;900&display=swap');
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+body, html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #050811;
+    color: #00ffcc;
+    font-family: 'Share Tech Mono', monospace;
+}
+
+#gameContainer {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+}
+
+#renderCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    background-color: #050811;
+}
+
+/* --- HUD OVERLAYS --- */
+.hud-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+/* Top Banner Header */
+.top-header {
+    position: absolute;
+    top: 16px;
+    left: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.game-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #ffffff;
+    text-shadow: 0 0 10px #00ffcc, 0 0 20px #00e5ff;
+}
+
+.game-subtitle {
+    font-size: 13px;
+    color: #00ffcc;
+    opacity: 0.85;
+    letter-spacing: 1px;
+}
+
+/* Rally Stage Info & Checkpoint Banner */
+.stage-banner-box {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    transition: opacity 0.3s ease;
+}
+
+#bannerNotice {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 8px 24px;
+    background: rgba(5, 12, 22, 0.85);
+    border: 1.5px solid #00ffcc;
+    border-radius: 4px;
+    color: #ffffff;
+    text-shadow: 0 0 12px #00ffcc;
+    box-shadow: 0 0 20px rgba(0, 255, 204, 0.35);
+}
+
+/* Minimap Box (Top Right) */
+.minimap-wrapper {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    background: rgba(5, 12, 24, 0.8);
+    border: 1.5px solid rgba(0, 255, 204, 0.6);
+    border-radius: 6px;
+    padding: 4px;
+    box-shadow: 0 0 16px rgba(0, 255, 204, 0.2);
+    pointer-events: auto;
+}
+
+#minimapCanvas {
+    display: block;
+    border-radius: 4px;
+    background-color: #050811;
+}
+
+.minimap-label {
+    text-align: center;
+    font-size: 11px;
+    padding-top: 4px;
+    color: #00e5ff;
+    letter-spacing: 1px;
+}
+
+/* Timing & Stage HUD (Top Left below header) */
+.timing-panel {
+    position: absolute;
+    top: 75px;
+    left: 24px;
+    background: rgba(5, 14, 25, 0.8);
+    border: 1px solid rgba(0, 255, 204, 0.4);
+    border-radius: 4px;
+    padding: 10px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 170px;
+}
+
+.hud-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+}
+
+.hud-row .lbl {
+    color: #88aacc;
+}
+
+.hud-row .val {
+    font-weight: bold;
+    color: #00ffcc;
+    text-shadow: 0 0 8px rgba(0, 255, 204, 0.6);
+}
+
+.hud-row .val.highlight {
+    color: #ffff00;
+}
+
+/* Speedometer & Tachometer Cluster (Bottom Right) */
+.gauge-cluster {
+    position: absolute;
+    bottom: 24px;
+    right: 28px;
+    background: rgba(5, 12, 24, 0.85);
+    border: 1.5px solid rgba(0, 255, 204, 0.5);
+    border-radius: 8px;
+    padding: 16px 22px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 0 25px rgba(0, 255, 204, 0.2);
+}
+
+.speed-readout {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
+#valSpeed {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 56px;
+    font-weight: 900;
+    line-height: 1;
+    color: #ffffff;
+    text-shadow: 0 0 15px #00ffcc, 0 0 30px rgba(0, 255, 204, 0.5);
+}
+
+.speed-unit {
+    font-size: 16px;
+    color: #00ffcc;
+    letter-spacing: 1px;
+}
+
+.gear-display {
+    margin-top: 4px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffff00;
+}
+
+.rpm-bar-container {
+    width: 170px;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #00ffcc;
+    border-radius: 2px;
+    margin-top: 10px;
+    overflow: hidden;
+}
+
+#rpmBarFill {
+    width: 12%;
+    height: 100%;
+    background-color: #00ffcc;
+    transition: width 0.05s ease-out;
+}
+
+.rpm-label {
+    font-size: 11px;
+    color: #88aacc;
+    margin-top: 4px;
+}
+
+/* Toolbar Buttons & Controls Guide (Bottom Left) */
+.controls-panel {
+    position: absolute;
+    bottom: 24px;
+    left: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: auto;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-hud {
+    background: rgba(5, 18, 32, 0.85);
+    border: 1px solid #00ffcc;
+    color: #ffffff;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    padding: 7px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0 0 10px rgba(0, 255, 204, 0.2);
+}
+
+.btn-hud:hover {
+    background: #00ffcc;
+    color: #050811;
+    box-shadow: 0 0 18px #00ffcc;
+}
+
+.help-text {
+    background: rgba(5, 12, 22, 0.7);
+    border-left: 2px solid #00ffcc;
+    padding: 6px 12px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #aaccdd;
+    max-width: 320px;
+}
+
+/* Mobile Touch Controls */
+.touch-controls {
+    position: absolute;
+    bottom: 20px;
+    width: 100%;
+    display: none;
+    pointer-events: none;
+    padding: 0 20px;
+}
+
+@media (pointer: coarse), (max-width: 768px) {
+    .touch-controls {
+        display: flex;
+        justify-content: space-between;
+    }
+    .help-text {
+        display: none;
+    }
+}
+
+.touch-cluster-left, .touch-cluster-right {
+    display: flex;
+    gap: 12px;
+    pointer-events: auto;
+}
+
+.btn-touch {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: rgba(0, 255, 204, 0.15);
+    border: 2px solid #00ffcc;
+    color: #ffffff;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+}
+
+.btn-touch.active {
+    background: #00ffcc;
+    color: #050811;
+}
+
+.btn-touch-brake {
+    border-color: #ff0055;
+    background: rgba(255, 0, 85, 0.15);
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.btn-touch-brake.active {
+    background: #ff0055;
+    color: #ffffff;
+}
