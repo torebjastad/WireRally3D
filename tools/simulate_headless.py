@@ -187,9 +187,9 @@ class RallyCarPhysics:
         v_lat = self.vx * rx + self.vz * rz
         
         # Check whether car is on asphalt road or off-road in grass/terrain
-        self.is_on_road = self.check_on_road(self.x, self.z, 1.2)
+        self.is_on_road = self.check_on_road(self.x, self.z, 1.8)
         target_off_road = 0.0 if self.is_on_road else 1.0
-        self.off_road_ratio += (target_off_road - self.off_road_ratio) * min(1.0, dt * 10.0)
+        self.off_road_ratio += (target_off_road - self.off_road_ratio) * min(1.0, dt * 4.0)
 
         # Transmission & Engine RPM
         for g in range(1, 6):
@@ -209,11 +209,12 @@ class RallyCarPhysics:
             high_speed_taper = 1.0 - 0.45 * (min(1.0, progress) ** 1.25)
             
         accel_force = throttle * 22.0 * gear_ratio * high_speed_taper
-        if self.off_road_ratio > 0.3 and v_fwd > 12.0:
-            accel_force *= max(0.0, 1.0 - (v_fwd - 12.0) / 6.0)
+        if self.off_road_ratio > 0.2 and v_fwd > 20.0:
+            power_taper = max(0.25, 1.0 - (v_fwd - 20.0) / 12.0)
+            accel_force *= (1.0 - self.off_road_ratio * (1.0 - power_taper))
 
         brake_force = brake * 36.0
-        off_road_drag = self.off_road_ratio * 14.0
+        off_road_drag = self.off_road_ratio * 4.5
         rolling_resistance = 0.5 + 0.015 * abs_v + off_road_drag
         aero_drag = 0.0003 * (v_fwd ** 2)
         
@@ -223,10 +224,10 @@ class RallyCarPhysics:
         # Forward acceleration
         net_fwd_accel = accel_force - math.copysign(brake_force, v_fwd if abs(v_fwd) > 0.1 else 1.0) - math.copysign(rolling_resistance + aero_drag, v_fwd) - slope_resistance
         
-        # Lateral friction (grip vs drift, grass feels slicker)
-        grip_factor = 30.0 - self.off_road_ratio * 14.0
+        # Lateral friction (grip vs drift, grass feels slicker and looser, but steerable)
+        grip_factor = 30.0 - self.off_road_ratio * 8.0
         if handbrake:
-            grip_factor = 6.0 - self.off_road_ratio * 2.0
+            grip_factor = 6.0 - self.off_road_ratio * 1.5
             brake_force += 18.0
             
         lat_accel = -v_lat * grip_factor
@@ -248,10 +249,9 @@ class RallyCarPhysics:
 
         self.yaw += self.yaw_rate * dt
         
-        # Update velocities (clamped while deep off-road)
+        # Update velocities (natural deceleration without artificial speed truncation)
         v_fwd += net_fwd_accel * dt
-        effective_max_speed = self.max_speed * (1.0 - self.off_road_ratio * 0.85)
-        v_fwd = max(-18.0, min(effective_max_speed, v_fwd))
+        v_fwd = max(-18.0, min(self.max_speed, v_fwd))
         v_lat += lat_accel * dt
         
         # Recombine to world velocity

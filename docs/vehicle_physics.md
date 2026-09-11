@@ -91,20 +91,20 @@ Dette gjer at bilen akselerer kraftfullt og snertent opp til 120 km/h, medan det
 For å sikre at rallysjåføren må halde seg på vegen for å oppretthalde farta, har spelet kontinuerleg overflatedeteksjon:
 
 1. **Romleg 2D vegsegment-indeks (`checkOnRoad`):**
-   - Kvart vegsegment frå OpenStreetMap (`arolia_roads.json`) har ei definert vegbreidde ($w$, typisk $7.5\text{ m}$ for hovudvegar, $5.0\text{ m}$ for bustadvegar) pluss ein toleransemargin på $1.2\text{ m}$.
+   - Kvart vegsegment frå OpenStreetMap (`arolia_roads.json`) har ei definert vegbreidde ($w$, typisk $7.5\text{ m}$ for hovudvegar, $5.0\text{ m}$ for bustadvegar) pluss ein tilgjevande skuldermargin på $1.8\text{ m}$.
+   - Dette gjer at vanlege kurvekutt og små skrens ikkje brått utløyser full terrengstraff.
    - Bilens posisjon $(x, z)$ vert projisert ortogonalt inn på næraste vegsegment med bounding-box-førehandssortering.
 2. **Progressiv overflateovergang (`offRoadRatio`):**
-   - Når bilen køyrer av vegen, aukar `offRoadRatio` jamt frå $0.0$ (asfalt) til $1.0$ (gras/terreng) med filterrate `dt * 10.0`.
+   - Når bilen køyrer av vegen, aukar `offRoadRatio` mjukt frå $0.0$ (asfalt) til $1.0$ (gras/terreng) med filterrate `dt * 4.0`. Korte hjulavstikkarar gjev berre eit lite, beherska motstandstillegg før bilen er attende på vegen.
 3. **Fysiske konsekvensar i gras/terreng:**
    - **Grasrullemotstand (Off-road drag):**
-     $$F_{\text{offroadDrag}} = \text{offRoadRatio} \times 14.0\text{ m/s}^2$$
-     Bilen bremsar kraftig opp så snart hjula rullar ut i terrenget.
-   - **Avkapping av motoreffekt:**
-     Når $\text{offRoadRatio} > 0.3$ og farten overstig $12.0\text{ m/s}$ (~$26\text{ km/h}$), vert gasspådraget kutta ned til null.
-   - **Fartssperre i terreng:**
-     Maksimal framoverfart er avgrensa:
-     $$v_{\text{max, eff}} = v_{\text{max}} \times (1.0 - \text{offRoadRatio} \times 0.85)$$
-     I terrenget er toppfart avgrensa til rundt $12.6\text{ m/s}$ (~$27\text{ km/h}$).
+     $$F_{\text{offroadDrag}} = \text{offRoadRatio} \times 4.5\text{ m/s}^2$$
+     Bilen bremsar merkbart opp gjennom reell fysisk motstandskraft (tilsvarande ~0.45G), utan å stanse som mot ein vegg.
+   - **Mjuk struping av motoreffekt:**
+     Når $\text{offRoadRatio} > 0.2$ og farten overstig $20.0\text{ m/s}$ (~$44\text{ km/h}$ reelt, ~$90\text{ km/h}$ HUD), vert motoren gradvis strupa, men beheld alltid minst 25 % kraft slik at sjåføren lett kan klatre ut av grøfter og skråningar.
+   - **Naturleg toppfartsavgrensing:**
+     Toppfart i terrenget vert naturleg avgrensa av balansen mellom motorkraft og summen av rullemotstand, grasdrag og luftmotstand (balanserer rundt ~28 m/s eller ~62 km/h HUD).
    - **Sleipare underlag:**
-     Sidegrepet fell frå $30.0$ ned til $16.0$, slik at bilen sklir meir sidelengs på vått gras.
+     Sidegrepet vert redusert frå $30.0$ til $22.0$. Bilen kjennest lett og laus på graset, men beheld god styreevne til å svinge inn på asfalten att.
+
 

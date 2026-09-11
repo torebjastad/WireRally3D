@@ -226,9 +226,9 @@ class RallyCarPhysics {
         let vLat = this.vx * rx + this.vz * rz;
 
         // Check whether car is on asphalt road or off-road in grass/terrain
-        this.isOnRoad = this.checkOnRoad(this.x, this.z, 1.2);
+        this.isOnRoad = this.checkOnRoad(this.x, this.z, 1.8);
         const targetOffRoad = this.isOnRoad ? 0.0 : 1.0;
-        this.offRoadRatio += (targetOffRoad - this.offRoadRatio) * Math.min(1.0, dt * 10.0);
+        this.offRoadRatio += (targetOffRoad - this.offRoadRatio) * Math.min(1.0, dt * 4.0);
 
         // Gear selection & RPM
         for (let g = 1; g <= 5; g++) {
@@ -256,11 +256,12 @@ class RallyCarPhysics {
             highSpeedTaper = 1.0 - 0.45 * Math.pow(Math.min(1.0, progress), 1.25);
         }
 
-        // Off-road slowdown penalty: heavy drag in grass/dirt and engine power cut above 12 m/s
-        const offRoadDrag = this.offRoadRatio * 14.0;
+        // Off-road slowdown penalty: smooth drag in grass/dirt and gentle engine taper above 20 m/s
+        const offRoadDrag = this.offRoadRatio * 4.5;
         let accelForce = throttle * 22.0 * gearRatio * highSpeedTaper;
-        if (this.offRoadRatio > 0.3 && vFwd > 12.0) {
-            accelForce *= Math.max(0.0, 1.0 - (vFwd - 12.0) / 6.0);
+        if (this.offRoadRatio > 0.2 && vFwd > 20.0) {
+            const powerTaper = Math.max(0.25, 1.0 - (vFwd - 20.0) / 12.0);
+            accelForce *= (1.0 - this.offRoadRatio * (1.0 - powerTaper));
         }
         if (brake > 0 && vFwd < 0.2 && throttle === 0) {
             // Reverse drive
@@ -276,10 +277,10 @@ class RallyCarPhysics {
 
         const netFwdAccel = accelForce - (vFwd !== 0 ? Math.sign(vFwd) * brakeForce : 0) - (vFwd !== 0 ? Math.sign(vFwd) * (rollingResistance + aeroDrag) : 0) - slopeResistance;
 
-        // Lateral grip & drift physics (grass feels slicker and looser)
-        let gripFactor = 30.0 - this.offRoadRatio * 14.0;
+        // Lateral grip & drift physics (grass feels slicker and looser, but still steerable)
+        let gripFactor = 30.0 - this.offRoadRatio * 8.0;
         if (handbrake) {
-            gripFactor = 6.0 - this.offRoadRatio * 2.0;
+            gripFactor = 6.0 - this.offRoadRatio * 1.5;
             brakeForce += 18.0;
         }
 
@@ -304,10 +305,9 @@ class RallyCarPhysics {
 
         this.yaw += this.yawRate * dt;
 
-        // Forward integration (capped while deep off-road)
+        // Forward integration (natural deceleration via forces without artificial speed truncation)
         vFwd += netFwdAccel * dt;
-        const effectiveMaxSpeed = this.maxSpeed * (1.0 - this.offRoadRatio * 0.85);
-        vFwd = Math.max(-18.0, Math.min(effectiveMaxSpeed, vFwd));
+        vFwd = Math.max(-18.0, Math.min(this.maxSpeed, vFwd));
         vLat += latAccel * dt;
 
         this.vx = vFwd * fx + vLat * rx;

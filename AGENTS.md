@@ -63,6 +63,9 @@ Kvar iterasjon i prosjektet er basert på eksplisitte instruksjonar frå brukare
 11. **Off-road brems og overflatedeteksjon:**
     - *Brukar:* "Kan du legge til at bilen bremsar kvar gang ein er utanfor vegen? Slik at ein må halde vegen for å greie holde farta."
     - *Løysing:* Implementerte 2D romleg vegsegment-indeksering mot OpenStreetMap-vegane (`checkOnRoad`), progressiv grasrulle-motstand (+14 m/s² motstand), avkapping av motoreffekt over 12 m/s utanfor veg, redusert sidegrep i gras, visuell HUD-varsling (`⚠️ UTANFOR VEGEN`), og justerte dei 11 rally-sjekkpunkta nøyaktig langs Årølivegens asfaltkorridor.
+12. **Mindre brutal off-road brems:**
+    - *Brukar:* "It is slowing down too much outside road now."
+    - *Løysing:* Fysikkjustering av off-road-modellen: reduserte grasdrag frå 14.0 til 4.5 m/s², fjerna den kunstige avkappinga av framoverhastigheit (`vFwd = min(effectiveMaxSpeed, vFwd)`) slik at nedbremsing skjer naturleg via krefter, auka vegskuldertoleransen frå 1.2m til 1.8m slik at vanlege kurvekutt ikkje brått utløyser grasstraff, senka innrullingsfarten for `offRoadRatio` til `dt * 4.0`, og tillèt motoren å halde opptil 20–25 m/s (~60–75 km/h HUD) i graset med minst 25 % motorkraft i reserve.
 
 ---
 
