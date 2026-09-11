@@ -165,12 +165,22 @@ class RallyCarPhysics {
             this.gear = -1; // Reverse
         }
 
-        const gearRatio = 1.0 - (Math.max(1, this.gear) - 1) * 0.16;
+        const gearRatio = 1.0 - (Math.max(1, this.gear) - 1) * 0.155;
         const targetRpm = 900.0 + (Math.abs(vFwd) / this.maxSpeed) * 6000.0 + throttle * 1400.0;
         this.rpm += (targetRpm - this.rpm) * Math.min(1.0, dt * 10.0);
 
-        // Driving forces
-        let accelForce = throttle * 24.0 * gearRatio;
+        // Driving forces with upper-speed acceleration taper
+        // Low and mid speeds (< 45 m/s) maintain punchy response out of corners and roundabouts.
+        // As speed climbs towards 84 m/s, acceleration gradually tapers off so reaching the very top
+        // speed requires a sustained straight.
+        const absV = Math.abs(vFwd);
+        let highSpeedTaper = 1.0;
+        if (absV > 45.0) {
+            const progress = (absV - 45.0) / (this.maxSpeed - 45.0);
+            highSpeedTaper = 1.0 - 0.45 * Math.pow(Math.min(1.0, progress), 1.25);
+        }
+
+        let accelForce = throttle * 22.0 * gearRatio * highSpeedTaper;
         if (brake > 0 && vFwd < 0.2 && throttle === 0) {
             // Reverse drive
             accelForce = -brake * 10.0;
@@ -179,10 +189,11 @@ class RallyCarPhysics {
         }
 
         let brakeForce = brake * 36.0;
-        const rollingResistance = 0.5 + 0.015 * Math.abs(vFwd);
+        const rollingResistance = 0.5 + 0.015 * absV;
+        const aeroDrag = 0.0003 * (vFwd * vFwd);
         const slopeResistance = Math.sin(this.pitch) * this.gravity;
 
-        const netFwdAccel = accelForce - (vFwd !== 0 ? Math.sign(vFwd) * brakeForce : 0) - (vFwd !== 0 ? Math.sign(vFwd) * rollingResistance : 0) - slopeResistance;
+        const netFwdAccel = accelForce - (vFwd !== 0 ? Math.sign(vFwd) * brakeForce : 0) - (vFwd !== 0 ? Math.sign(vFwd) * (rollingResistance + aeroDrag) : 0) - slopeResistance;
 
         // Lateral grip & drift physics
         let gripFactor = 30.0;

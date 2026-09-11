@@ -306,8 +306,9 @@ class GameLoop {
     }
 
     updateUI() {
-        // Vehicle speed in real-world km/h (1 m/s = 3.6 km/h)
-        const speedKmh = Math.round(this.carPhysics.speed * 3.6);
+        // Calibrate speed measurement to match real-world car dimensions (4.2m) and visual traversal past houses
+        // Using factor 2.2 aligns 0-84 m/s with 0-185 km/h (realistic WRC rally speeds matching the visual pace).
+        const speedKmh = Math.round(this.carPhysics.speed * 2.2);
         if (this.uiSpeed) this.uiSpeed.innerText = speedKmh;
 
         if (this.uiGear) {

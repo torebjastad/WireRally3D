@@ -128,20 +128,27 @@ class RallyCarPhysics:
                 self.gear = g
                 break
         
-        gear_ratio = 1.0 - (self.gear - 1) * 0.16
+        gear_ratio = 1.0 - (self.gear - 1) * 0.155
         target_rpm = 900.0 + (abs(v_fwd) / self.max_speed) * 6000.0 + throttle * 1200.0
         self.rpm += (target_rpm - self.rpm) * min(1.0, dt * 10.0)
         
-        # Driving forces
-        accel_force = throttle * 24.0 * gear_ratio
+        # Driving forces with upper-speed acceleration taper
+        abs_v = abs(v_fwd)
+        high_speed_taper = 1.0
+        if abs_v > 45.0:
+            progress = (abs_v - 45.0) / (self.max_speed - 45.0)
+            high_speed_taper = 1.0 - 0.45 * (min(1.0, progress) ** 1.25)
+            
+        accel_force = throttle * 22.0 * gear_ratio * high_speed_taper
         brake_force = brake * 36.0
-        rolling_resistance = 0.5 + 0.015 * abs(v_fwd)
+        rolling_resistance = 0.5 + 0.015 * abs_v
+        aero_drag = 0.0003 * (v_fwd ** 2)
         
         # Slope resistance (gravity component along slope)
         slope_resistance = math.sin(self.pitch) * self.gravity
         
         # Forward acceleration
-        net_fwd_accel = accel_force - math.copysign(brake_force, v_fwd if abs(v_fwd) > 0.1 else 1.0) - math.copysign(rolling_resistance, v_fwd) - slope_resistance
+        net_fwd_accel = accel_force - math.copysign(brake_force, v_fwd if abs(v_fwd) > 0.1 else 1.0) - math.copysign(rolling_resistance + aero_drag, v_fwd) - slope_resistance
         
         # Lateral friction (grip vs drift)
         grip_factor = 30.0 # lateral grip rate
