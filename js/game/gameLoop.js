@@ -38,12 +38,12 @@ class GameLoop {
             handbrake: false
         };
 
-        // Camera
-        this.cameraModes = ['chase', 'hood', 'heli_chase', 'heli_top'];
+        // Camera (Default to Heli Skrått / Lazy diagonal chase)
+        this.cameraModes = ['heli_chase', 'chase', 'hood', 'heli_top'];
         this.currentCamIdx = 0;
-        this.camModeChanged = false;
-        this.camPos = new Vector3(this.carPhysics.x, this.carPhysics.y + 3.0, this.carPhysics.z - 7.0);
-        this.camTarget = new Vector3(this.carPhysics.x, this.carPhysics.y + 1.2, this.carPhysics.z);
+        this.camModeChanged = true;
+        this.camPos = new Vector3(this.carPhysics.x, this.carPhysics.y + 18.0, this.carPhysics.z - 22.0);
+        this.camTarget = new Vector3(this.carPhysics.x, this.carPhysics.y + 1.2, this.carPhysics.z + 4.0);
 
         // UI Elements
         this.uiSpeed = document.getElementById('valSpeed');
@@ -169,7 +169,10 @@ class GameLoop {
         bindTouch('btnTouchBrake', 'handbrake');
 
         const btnCam = document.getElementById('btnCam');
-        if (btnCam) btnCam.addEventListener('click', () => this.cycleCamera());
+        if (btnCam) {
+            btnCam.innerText = '🎥 KAMERA: HELI SKRÅTT';
+            btnCam.addEventListener('click', () => this.cycleCamera());
+        }
 
         const btnReset = document.getElementById('btnReset');
         if (btnReset) btnReset.addEventListener('click', () => this.resetToTrack());
@@ -303,7 +306,11 @@ class GameLoop {
     }
 
     updateUI() {
-        const speedKmh = Math.round(this.carPhysics.speed * 3.6);
+        // Calibrate speed measurement to match real-world car dimensions (4.2m) and map scale (1.61m/px)
+        // Instantaneous coordinate speed is in world units (m/s).
+        // Calibrated factor 2.2 accounts for the visual map scale (3.6 / 1.61 ≈ 2.23), giving accurate real-world
+        // speed readouts matching the visual traversal past 4.2m car lengths and 12m houses.
+        const speedKmh = Math.round(this.carPhysics.speed * 2.2);
         if (this.uiSpeed) this.uiSpeed.innerText = speedKmh;
 
         if (this.uiGear) {
@@ -373,6 +380,9 @@ class GameLoop {
             );
 
             // 5. Camera & 3D Render
+            if (this.renderer.setSpeedRatio) {
+                this.renderer.setSpeedRatio(this.carPhysics.speed / this.carPhysics.maxSpeed);
+            }
             this.updateCamera(dt);
             this.renderer.renderScene(
                 this.terrain,

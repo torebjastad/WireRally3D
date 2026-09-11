@@ -3,7 +3,9 @@ class WireframeRenderer {
     constructor(canvas) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
-        this.fov = 72.0 * Math.PI / 180.0;
+        this.baseFov = 70.0 * Math.PI / 180.0;
+        this.fov = this.baseFov;
+        this.speedRatio = 0.0;
         this.near = 0.8;
         this.far = 1400.0;
 
@@ -13,6 +15,10 @@ class WireframeRenderer {
 
         // Cached road ribbons
         this.roadRibbons = null;
+    }
+
+    setSpeedRatio(ratio) {
+        this.speedRatio = Math.max(0.0, Math.min(1.0, ratio || 0.0));
     }
 
     resize() {
@@ -35,6 +41,8 @@ class WireframeRenderer {
         const fLen = Math.hypot(fx, fy, fz) || 1.0;
         this.camFwd = new Vector3(fx / fLen, fy / fLen, fz / fLen);
 
+        // Dynamic speed FOV: subtly expands (+6 deg) at speed for natural velocity sensation
+        this.fov = this.baseFov + this.speedRatio * (6.0 * Math.PI / 180.0);
         const aspect = this.canvas.width / this.canvas.height;
         const proj = new Matrix4().perspective(this.fov, aspect, this.near, this.far);
         const view = new Matrix4().lookAt(pos, target, new Vector3(0, 1, 0));

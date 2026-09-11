@@ -113,7 +113,7 @@ for (let frame = 0; frame < 300; frame++) {
     const fx = Math.sin(carPhysics.yaw);
     const fz = Math.cos(carPhysics.yaw);
     const modeIdx = Math.floor(frame / 75) % 4;
-    const mode = ['chase', 'hood', 'heli_chase', 'heli_top'][modeIdx];
+    const mode = ['heli_chase', 'chase', 'hood', 'heli_top'][modeIdx];
 
     let camPos, camTarget;
     if (mode === 'chase') {

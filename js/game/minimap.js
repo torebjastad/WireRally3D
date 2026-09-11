@@ -118,15 +118,15 @@ class HUDMinimap {
         ctx.translate(carPt.x, carPt.y);
         ctx.rotate(angle);
 
-        // Car arrow icon
+        // Proportional car arrow icon matching map scale
         ctx.fillStyle = '#ff0055';
         ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 1.2;
+        ctx.lineWidth = 1.0;
         ctx.beginPath();
-        ctx.moveTo(8, 0);
-        ctx.lineTo(-5, -4);
-        ctx.lineTo(-2, 0);
-        ctx.lineTo(-5, 4);
+        ctx.moveTo(5.5, 0);
+        ctx.lineTo(-3.5, -2.8);
+        ctx.lineTo(-1.5, 0);
+        ctx.lineTo(-3.5, 2.8);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
