@@ -46,20 +46,13 @@ class RallyCarPhysics {
             const zs = poly.map(p => p.z);
             const pad = 0.3; // Reduced padding (was 0.8m) — less phantom overshoot
 
-            // Ensure baseY is at least 1.5m above ground to prevent ground-level phantom hits
-            const terrainH = this.terrain ? this.terrain.getHeight(
-                (Math.min(...xs) + Math.max(...xs)) * 0.5,
-                (Math.min(...zs) + Math.max(...zs)) * 0.5
-            ) : 0;
-            const effectiveBaseY = Math.max(b.base_y, terrainH + 1.5);
-
             result.push({
                 xMin: Math.min(...xs) - pad,
                 xMax: Math.max(...xs) + pad,
                 zMin: Math.min(...zs) - pad,
                 zMax: Math.max(...zs) + pad,
-                baseY: effectiveBaseY,
-                topY: effectiveBaseY + b.height,
+                baseY: b.base_y,
+                topY: b.base_y + b.height,
                 polygon: poly // Store for point-in-polygon test
             });
         }

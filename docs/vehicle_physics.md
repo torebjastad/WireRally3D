@@ -123,7 +123,6 @@ Bygningskollisjonen i [`physics.js`](file:///c:/Users/toreb/OneDrive/Code/Årøl
 1. **Filtrering (`prepareBuildings`):**
    - Bygningar med polygon-areal under $4\text{ m}^2$ (berekna med shoelace-formelen) vert filtrerte ut for å eliminere fantomkollisjonar frå bittesmå skur, murar og tekniske polygonrestar.
    - AABB-padding er redusert til $0.3\text{ m}$ (tidlegare $0.8\text{ m}$) for tettare tilpassing til det faktiske fotavtrykket.
-   - `baseY` vert sett til minimum $1.5\text{ m}$ over terrenget i bygningens senterpunkt, slik at låge strukturar (garasjar, kjellarar) ikkje fangar bilen ved bakkenivå.
 
 2. **Rask AABB Early-Reject:**
    Berre bygningar der bilens $(x, z)$ ligg innanfor den (reduserte) AABB-boksen og bilens $y$ er mellom $\text{baseY} - 0.5$ og $\text{topY}$ vert sendt vidare til polygon-testen.
