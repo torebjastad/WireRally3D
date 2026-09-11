@@ -72,7 +72,29 @@ class RallyCarPhysics {
         const rx = Math.cos(this.yaw);
         const rz = -Math.sin(this.yaw);
 
-        const groundY = this.terrain ? this.terrain.getHeight(this.x, this.z) : 0.0;
+        // 4-wheel contact patch terrain sampling
+        const Lw = 1.365; // half wheelbase
+        const Ww = 0.98;  // half track width
+
+        let groundY = 0.0;
+        let targetPitch = 0.0;
+        let targetRoll = 0.0;
+
+        if (this.terrain) {
+            const hFL = this.terrain.getHeight(this.x + fx * Lw - rx * Ww, this.z + fz * Lw - rz * Ww);
+            const hFR = this.terrain.getHeight(this.x + fx * Lw + rx * Ww, this.z + fz * Lw + rz * Ww);
+            const hRL = this.terrain.getHeight(this.x - fx * Lw - rx * Ww, this.z - fz * Lw - rz * Ww);
+            const hRR = this.terrain.getHeight(this.x - fx * Lw + rx * Ww, this.z - fz * Lw + rz * Ww);
+
+            const hFront = (hFL + hFR) * 0.5;
+            const hRear  = (hRL + hRR) * 0.5;
+            const hRight = (hFR + hRR) * 0.5;
+            const hLeft  = (hFL + hRL) * 0.5;
+
+            groundY = (hFront + hRear) * 0.5;
+            targetPitch = Math.atan2(hFront - hRear, 2.0 * Lw);
+            targetRoll = Math.atan2(hRight - hLeft, 2.0 * Ww);
+        }
 
         // Ground contact check
         if (this.y <= groundY + 0.08) {
@@ -80,9 +102,16 @@ class RallyCarPhysics {
             this.y = groundY;
             if (this.vy < 0) this.vy = 0;
             this.airTime = 0.0;
+            // Responsive terrain gradient tracking
+            this.pitch += (targetPitch - this.pitch) * Math.min(1.0, dt * 20.0);
+            this.roll += (targetRoll - this.roll) * Math.min(1.0, dt * 20.0);
         } else {
             this.isGrounded = false;
             this.airTime += dt;
+            // Flight trajectory pitch
+            const flightPitch = Math.atan2(this.vy, Math.max(1.0, this.speed));
+            this.pitch += (flightPitch - this.pitch) * Math.min(1.0, dt * 4.0);
+            this.roll += (0.0 - this.roll) * Math.min(1.0, dt * 4.0);
         }
 
         if (!this.isGrounded) {
@@ -97,14 +126,6 @@ class RallyCarPhysics {
             this.checkCollisions();
             return;
         }
-
-        // Terrain pitch and roll estimation
-        const aheadY = this.terrain ? this.terrain.getHeight(this.x + fx * 2.0, this.z + fz * 2.0) : groundY;
-        const rightY = this.terrain ? this.terrain.getHeight(this.x + rx * 1.5, this.z + rz * 1.5) : groundY;
-        const slopePitch = (aheadY - groundY) / 2.0;
-        const slopeRoll = (rightY - groundY) / 1.5;
-        this.pitch += (slopePitch - this.pitch) * Math.min(1.0, dt * 12.0);
-        this.roll += (slopeRoll - this.roll) * Math.min(1.0, dt * 12.0);
 
         // Velocity decomposition
         let vFwd = this.vx * fx + this.vz * fz;

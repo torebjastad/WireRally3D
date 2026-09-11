@@ -205,23 +205,27 @@ class GameLoop {
         const mode = this.cameraModes[this.currentCamIdx];
 
         if (mode === 'chase') {
-            // Dynamic rally chase cam with speed zoom and drift lag
+            // Dynamic rally chase cam with speed zoom, pitch tracking, and uphill ground clearance
             const dist = 6.2 + (car.speed / car.maxSpeed) * 2.8;
             const targetCamX = car.x - fx * dist;
             const targetCamZ = car.z - fz * dist;
-            const targetCamY = car.y + 2.5 + (car.speed / car.maxSpeed) * 0.8;
+            const groundBehind = this.terrain ? this.terrain.getHeight(targetCamX, targetCamZ) : car.y;
+            const targetCamY = Math.max(car.y + 2.5 + (car.speed / car.maxSpeed) * 0.8, groundBehind + 1.8);
 
             this.camPos.x += (targetCamX - this.camPos.x) * Math.min(1.0, dt * 8.0);
             this.camPos.y += (targetCamY - this.camPos.y) * Math.min(1.0, dt * 8.0);
             this.camPos.z += (targetCamZ - this.camPos.z) * Math.min(1.0, dt * 8.0);
 
             const lookAhead = 8.0 + car.speed * 0.3;
-            this.camTarget.set(car.x + fx * lookAhead, car.y + 1.2, car.z + fz * lookAhead);
+            const pitchOffset = Math.sin(car.pitch) * lookAhead;
+            this.camTarget.set(car.x + fx * lookAhead, car.y + 1.2 + pitchOffset, car.z + fz * lookAhead);
         } else if (mode === 'hood') {
-            // First-person rally cockpit view
-            this.camPos.set(car.x + fx * 0.4, car.y + 1.1, car.z + fz * 0.4);
+            // First-person rally cockpit view pitched with the car
+            const hoodPitchY = Math.sin(car.pitch) * 0.4;
+            this.camPos.set(car.x + fx * 0.4, car.y + 1.1 + hoodPitchY, car.z + fz * 0.4);
             const lookAhead = 25.0;
-            this.camTarget.set(car.x + fx * lookAhead, car.y + 0.8, car.z + fz * lookAhead);
+            const pitchOffset = Math.sin(car.pitch) * lookAhead;
+            this.camTarget.set(car.x + fx * lookAhead, car.y + 0.8 + pitchOffset, car.z + fz * lookAhead);
         } else if (mode === 'heli') {
             // Overhead tactical map view
             const heliHeight = 45.0;

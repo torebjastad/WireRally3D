@@ -190,15 +190,74 @@ def render_3d_preview():
     draw_3d_line(lt, rt, gate_col, 3)
     draw_3d_line(lb, rb, (255, 255, 0), 3)
 
-    # 7. 3D Rally Car Model on Road
-    # Car wireframe chassis
+    # 7. 3D Rally Car Model on Road (Following Terrain Gradient)
     car_col = (255, 255, 255)
     cy = math.cos(heading)
     sy = math.sin(heading)
+    fx = math.sin(heading)
+    fz = math.cos(heading)
+    rx = math.cos(heading)
+    rz = -math.sin(heading)
+
+    verts_grid = terrain["vertices"]
+    x_min_t = terrain["x_min"]
+    z_min_t = terrain["z_min"]
+    step_t = terrain["grid_step"]
+    nx_t = terrain["nx"]
+    nz_t = terrain["nz"]
+
+    def get_terrain_h(x, z):
+        u = max(0.0, min(nx_t - 1.0001, (x - x_min_t) / step_t))
+        v = max(0.0, min(nz_t - 1.0001, (z - z_min_t) / step_t))
+        i0 = int(math.floor(u))
+        j0 = int(math.floor(v))
+        i1 = min(nx_t - 1, i0 + 1)
+        j1 = min(nz_t - 1, j0 + 1)
+        fu, fv = u - i0, v - j0
+        y00 = verts_grid[j0][i0]["y"]
+        y10 = verts_grid[j0][i1]["y"]
+        y01 = verts_grid[j1][i0]["y"]
+        y11 = verts_grid[j1][i1]["y"]
+        y0 = y00 * (1 - fu) + y10 * fu
+        y1 = y01 * (1 - fu) + y11 * fu
+        return y0 * (1 - fv) + y1 * fv
+
+    Lw = 1.365
+    Ww = 0.98
+    hFL = get_terrain_h(car_x + fx * Lw - rx * Ww, car_z + fz * Lw - rz * Ww)
+    hFR = get_terrain_h(car_x + fx * Lw + rx * Ww, car_z + fz * Lw + rz * Ww)
+    hRL = get_terrain_h(car_x - fx * Lw - rx * Ww, car_z - fz * Lw - rz * Ww)
+    hRR = get_terrain_h(car_x - fx * Lw + rx * Ww, car_z - fz * Lw + rz * Ww)
+
+    hFront = (hFL + hFR) * 0.5
+    hRear  = (hRL + hRR) * 0.5
+    hRight = (hFR + hRR) * 0.5
+    hLeft  = (hFL + hRL) * 0.5
+
+    car_ground_y = (hFront + hRear) * 0.5
+    pitch = math.atan2(hFront - hRear, 2.0 * Lw)
+    roll = math.atan2(hRight - hLeft, 2.0 * Ww)
+
+    cp = math.cos(pitch)
+    sp = math.sin(pitch)
+    cr = math.cos(roll)
+    sr = math.sin(roll)
+    wheel_radius = 0.38
+    base_py = car_ground_y + wheel_radius
+
     def c_to_w(lx, ly, lz):
-        wx = car_x + lz * sy + lx * cy
-        wy = car_y + ly
-        wz = car_z + lz * cy - lx * sy
+        # Roll
+        x1 = lx * cr - ly * sr
+        y1 = lx * sr + ly * cr
+        z1 = lz
+        # Pitch
+        x2 = x1
+        y2 = y1 * cp + z1 * sp
+        z2 = -y1 * sp + z1 * cp
+        # Yaw
+        wx = car_x + z2 * sy + x2 * cy
+        wy = base_py + y2
+        wz = car_z + z2 * cy - x2 * sy
         return (wx, wy, wz)
 
     # Lower bumper
@@ -232,13 +291,13 @@ def render_3d_preview():
     sw = c_to_w(-0.32, 0.75, 0.35)
     draw_3d_line(driver_neck, sw, (0, 255, 136), 2)
 
-    # Wheels
-    for wx, wz in [(-1.0, 1.4), (1.0, 1.4), (-1.0, -1.4), (1.0, -1.4)]:
+    # Wheels (centered at ly = 0, resting on ground)
+    for wx, wz in [(-1.0, 1.365), (1.0, 1.365), (-1.0, -1.365), (1.0, -1.365)]:
         for a in range(6):
             a1 = (a / 6) * math.pi * 2
             a2 = ((a + 1) / 6) * math.pi * 2
-            p1 = c_to_w(wx, 0.38 + 0.38 * math.cos(a1), wz + 0.38 * math.sin(a1))
-            p2 = c_to_w(wx, 0.38 + 0.38 * math.cos(a2), wz + 0.38 * math.sin(a2))
+            p1 = c_to_w(wx, wheel_radius * math.cos(a1), wz + wheel_radius * math.sin(a1))
+            p2 = c_to_w(wx, wheel_radius * math.cos(a2), wz + wheel_radius * math.sin(a2))
             draw_3d_line(p1, p2, (0, 255, 204), 2)
 
     out_file = r"C:\Users\toreb\.gemini\antigravity\brain\65f08b51-ef8a-42f5-aaad-81bab4b9b229\arolia_rally_3d_preview.png"

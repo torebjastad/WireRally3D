@@ -78,3 +78,31 @@ def test_airborne_jump_and_landing():
     assert airborne_detected, "Car did not take off when flying off crest"
     assert max_air_time > 0.2, "Car did not stay in air during jump"
     assert car.is_grounded, "Car should have landed back on ground after jump"
+
+def test_car_follows_downhill_and_uphill_slopes():
+    """Verify that car pitch and 4-wheel contact accurately follow downhill and uphill slopes."""
+    # 15% downhill slope facing South (-Z direction in Årølia towards the fjord)
+    def downhill_terrain(x, z):
+        return 50.0 - 0.15 * z  # downhill when moving in +Z
+
+    car = RallyCarPhysics(terrain_sampler=downhill_terrain)
+    car.reset(0.0, 50.0, 0.0)
+    car.yaw = 0.0 # Facing +Z (downhill)
+
+    dt = 1.0 / 60.0
+    for _ in range(30):
+        car.update(throttle=0.0, steer=0.0, brake=0.0, handbrake=False, dt=dt)
+
+    expected_pitch = math.atan2(-0.15 * 2.73, 2.73)
+    print(f"\nDownhill test: Car Pitch = {math.degrees(car.pitch):.2f} deg, Expected ~ {math.degrees(expected_pitch):.2f} deg")
+    assert car.pitch < -0.05, f"Car nose did not pitch down on downhill slope: {car.pitch}"
+    assert abs(car.pitch - expected_pitch) < 0.03, "Pitch did not accurately match slope angle"
+
+    # Uphill test
+    car.yaw = math.pi # Facing -Z (uphill)
+    for _ in range(30):
+        car.update(throttle=0.0, steer=0.0, brake=0.0, handbrake=False, dt=dt)
+
+    print(f"Uphill test: Car Pitch = {math.degrees(car.pitch):.2f} deg")
+    assert car.pitch > 0.05, f"Car nose did not pitch up on uphill slope: {car.pitch}"
+

@@ -55,18 +55,39 @@ class RallyCarPhysics:
         rx = math.cos(self.yaw)
         rz = -math.sin(self.yaw)
         
-        ground_y = self.terrain_sampler(self.x, self.z)
+        # 4-wheel contact patch terrain sampling
+        Lw = 1.365 # half wheelbase
+        Ww = 0.98  # half track width
+
+        hFL = self.terrain_sampler(self.x + fx * Lw - rx * Ww, self.z + fz * Lw - rz * Ww)
+        hFR = self.terrain_sampler(self.x + fx * Lw + rx * Ww, self.z + fz * Lw + rz * Ww)
+        hRL = self.terrain_sampler(self.x - fx * Lw - rx * Ww, self.z - fz * Lw - rz * Ww)
+        hRR = self.terrain_sampler(self.x - fx * Lw + rx * Ww, self.z - fz * Lw + rz * Ww)
+
+        hFront = (hFL + hFR) * 0.5
+        hRear  = (hRL + hRR) * 0.5
+        hRight = (hFR + hRR) * 0.5
+        hLeft  = (hFL + hRL) * 0.5
+
+        ground_y = (hFront + hRear) * 0.5
+        target_pitch = math.atan2(hFront - hRear, 2.0 * Lw)
+        target_roll = math.atan2(hRight - hLeft, 2.0 * Ww)
         
         # Check if grounded
-        if self.y <= ground_y + 0.05:
+        if self.y <= ground_y + 0.08:
             self.is_grounded = True
             self.y = ground_y
             if self.vy < 0:
                 self.vy = 0
             self.air_time = 0.0
+            self.pitch += (target_pitch - self.pitch) * min(1.0, dt * 20.0)
+            self.roll += (target_roll - self.roll) * min(1.0, dt * 20.0)
         else:
             self.is_grounded = False
             self.air_time += dt
+            flight_pitch = math.atan2(self.vy, max(1.0, self.speed))
+            self.pitch += (flight_pitch - self.pitch) * min(1.0, dt * 4.0)
+            self.roll += (0.0 - self.roll) * min(1.0, dt * 4.0)
             
         if not self.is_grounded:
             # Airborne dynamics: gravity + aerodynamic damping
@@ -77,15 +98,6 @@ class RallyCarPhysics:
             self.yaw += self.yaw_rate * dt * 0.5
             self.speed = math.sqrt(self.vx**2 + self.vz**2)
             return
-            
-        # Terrain pitch and roll
-        # Sample slightly ahead and to the right to compute slope
-        ahead_y = self.terrain_sampler(self.x + fx * 2.0, self.z + fz * 2.0)
-        right_y = self.terrain_sampler(self.x + rx * 1.5, self.z + rz * 1.5)
-        slope_pitch = (ahead_y - ground_y) / 2.0
-        slope_roll = (right_y - ground_y) / 1.5
-        self.pitch += (slope_pitch - self.pitch) * min(1.0, dt * 10.0)
-        self.roll += (slope_roll - self.roll) * min(1.0, dt * 10.0)
         
         # Decompose velocity into forward and lateral components
         v_fwd = self.vx * fx + self.vz * fz

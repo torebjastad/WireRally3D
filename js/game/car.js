@@ -65,7 +65,7 @@ class WireframeCar {
     getLines(physics) {
         const lines = [];
         const px = physics.x;
-        const py = physics.y + this.wheelRadius * 0.5;
+        const py = physics.y + this.wheelRadius;
         const pz = physics.z;
         const yaw = physics.yaw;
         const pitch = physics.pitch;
@@ -78,18 +78,17 @@ class WireframeCar {
         const cr = Math.cos(roll), sr = Math.sin(roll);
 
         const toWorld = (lx, ly, lz) => {
-            // Roll
+            // Roll (around local Z axis)
             let x1 = lx * cr - ly * sr;
             let y1 = lx * sr + ly * cr;
             let z1 = lz;
 
-            // Pitch
+            // Pitch (around local X axis): positive pitch raises nose (+Y), negative pitch lowers nose (-Y)
             let x2 = x1;
-            let y2 = y1 * cp - z1 * sp;
-            let z2 = y1 * sp + z1 * cp;
+            let y2 = y1 * cp + z1 * sp;
+            let z2 = -y1 * sp + z1 * cp;
 
-            // Yaw: in our system, heading 0 = +Z (North), heading pi/2 = +X (East)
-            // local Z is forward, local X is right
+            // Yaw: heading 0 = +Z (North), heading pi/2 = +X (East)
             let wx = px + z2 * sy + x2 * cy;
             let wy = py + y2;
             let wz = pz + z2 * cy - x2 * sy;
