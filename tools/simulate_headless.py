@@ -28,6 +28,7 @@ class RallyCarPhysics:
         self.roll = 0.0
         self.speed = 0.0
         self.drift_slip = 0.0
+        self.steer_input = 0.0
         self.steer_angle = 0.0
         self.rpm = 900.0
         self.gear = 1
@@ -42,10 +43,28 @@ class RallyCarPhysics:
         brake: float [0, 1]
         handbrake: bool
         """
-        # Target steering angle (with speed-sensitive reduction)
-        speed_factor = max(0.2, 1.0 - (abs(self.speed) / self.max_speed) * 0.65)
-        target_steer = steer * self.max_steer * speed_factor
-        self.steer_angle += (target_steer - self.steer_angle) * min(1.0, dt * 15.0)
+        # Smart keyboard steering filter
+        # Smooth attack ramping with fast return-to-center and counter-steering
+        if steer > 0:
+            rate = 9.0 if self.steer_input < 0 else 4.5
+            self.steer_input = min(1.0, self.steer_input + rate * dt)
+        elif steer < 0:
+            rate = 9.0 if self.steer_input > 0 else 4.5
+            self.steer_input = max(-1.0, self.steer_input - rate * dt)
+        else:
+            decay_rate = 7.0
+            if self.steer_input > 0:
+                self.steer_input = max(0.0, self.steer_input - decay_rate * dt)
+            elif self.steer_input < 0:
+                self.steer_input = min(0.0, self.steer_input + decay_rate * dt)
+
+        # Non-linear progressive response (soft center for calm lane-keeping)
+        curved_input = math.copysign(abs(self.steer_input) ** 1.35, self.steer_input) if self.steer_input != 0 else 0.0
+
+        # Speed-sensitive steering scale (smooth taper at high speed)
+        speed_kmh = abs(self.speed) * 3.6
+        speed_scale = 1.0 / (1.0 + (speed_kmh / 50.0) * 0.95)
+        self.steer_angle = curved_input * self.max_steer * speed_scale
         
         # Forward vector: in our coord system, +X = East, +Z = North
         # Heading 0 = North (+Z), Heading pi/2 = East (+X)
@@ -141,6 +160,12 @@ class RallyCarPhysics:
             target_yaw_rate += oversteer
             
         self.yaw_rate += (target_yaw_rate - self.yaw_rate) * min(1.0, dt * 12.0)
+        
+        # High-speed yaw stabilization assist (anti-twitch dampener on straights)
+        if not handbrake and abs(self.steer_input) < 0.15:
+            stab_factor = min(1.0, abs(v_fwd) / 12.0)
+            self.yaw_rate *= max(0.0, 1.0 - dt * 6.0 * stab_factor)
+
         self.yaw += self.yaw_rate * dt
         
         # Update velocities

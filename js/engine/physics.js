@@ -48,6 +48,7 @@ class RallyCarPhysics {
         this.roll = 0.0;
         this.speed = 0.0;
         this.driftSlip = 0.0;
+        this.steerInput = 0.0;
         this.steerAngle = 0.0;
         this.rpm = 900.0;
         this.gear = 1;
@@ -60,10 +61,32 @@ class RallyCarPhysics {
     update(throttle, steer, brake, handbrake, dt = 1.0 / 60.0) {
         dt = Math.min(dt, 0.05); // prevent spiral of death
 
-        // Speed-dependent steering
-        const speedFactor = Math.max(0.25, 1.0 - (Math.abs(this.speed) / this.maxSpeed) * 0.65);
-        const targetSteer = steer * this.maxSteer * speedFactor;
-        this.steerAngle += (targetSteer - this.steerAngle) * Math.min(1.0, dt * 15.0);
+        // Smart keyboard steering filter
+        // 1. Dual-rate input filter (smooth attack, rapid return-to-center and counter-steer)
+        if (steer > 0) {
+            const rate = (this.steerInput < 0) ? 9.0 : 4.5;
+            this.steerInput = Math.min(1.0, this.steerInput + rate * dt);
+        } else if (steer < 0) {
+            const rate = (this.steerInput > 0) ? 9.0 : 4.5;
+            this.steerInput = Math.max(-1.0, this.steerInput - rate * dt);
+        } else {
+            const decayRate = 7.0;
+            if (this.steerInput > 0) {
+                this.steerInput = Math.max(0.0, this.steerInput - decayRate * dt);
+            } else if (this.steerInput < 0) {
+                this.steerInput = Math.min(0.0, this.steerInput + decayRate * dt);
+            }
+        }
+
+        // 2. Non-linear progressive response (soft center for calm lane-keeping)
+        const curvedInput = (this.steerInput !== 0)
+            ? Math.sign(this.steerInput) * Math.pow(Math.abs(this.steerInput), 1.35)
+            : 0.0;
+
+        // 3. Speed-sensitive steering scale (smooth taper at higher speeds)
+        const speedKmh = Math.abs(this.speed) * 3.6;
+        const speedScale = 1.0 / (1.0 + (speedKmh / 50.0) * 0.95);
+        this.steerAngle = curvedInput * this.maxSteer * speedScale;
 
         // Forward vector (+X = East, +Z = North)
         const fx = Math.sin(this.yaw);
@@ -179,7 +202,14 @@ class RallyCarPhysics {
             targetYawRate += oversteer;
         }
 
-        this.yawRate += (targetYawRate - this.yawRate) * Math.min(1.0, dt * 14.0);
+        this.yawRate += (targetYawRate - this.yawRate) * Math.min(1.0, dt * 12.0);
+
+        // High-speed yaw stabilization assist (anti-twitch dampener on straights)
+        if (!handbrake && Math.abs(this.steerInput) < 0.15) {
+            const stabFactor = Math.min(1.0, Math.abs(vFwd) / 12.0);
+            this.yawRate *= Math.max(0.0, 1.0 - dt * 6.0 * stabFactor);
+        }
+
         this.yaw += this.yawRate * dt;
 
         // Forward integration
