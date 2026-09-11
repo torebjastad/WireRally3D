@@ -71,6 +71,7 @@
             <!-- Toolbar & Controls Bottom Left -->
             <div class="controls-panel">
                 <div class="action-buttons">
+                    <button class="btn-hud" id="btnSelectStage">🗺️ VEL KART</button>
                     <button class="btn-hud" id="btnReset">🔄 RESET BIL (R)</button>
                     <button class="btn-hud" id="btnCam">🎥 KAMERA (C)</button>
                     <button class="btn-hud" id="btnMute">🔊 LYD (M)</button>
@@ -81,6 +82,7 @@
                     • <b>Gass / Brems:</b> W / S eller Pil Opp / Ned<br>
                     • <b>Brekk-sladd (Drift):</b> SPACE (Mellomrom)<br>
                     • <b>Kamera:</b> C (Heli Bakfra [Standard] / Chase / Panser / Heli Topp)<br>
+                    • <b>Velg Kart / Område:</b> Klikk "🗺️ VEL KART" knappen<br>
                     • <b>Start på nytt:</b> T
                 </div>
             </div>
@@ -98,15 +100,76 @@
                 </div>
             </div>
         </div>
+
+        <!-- Stage Selection Modal Dialog -->
+        <div id="stageModal" class="stage-modal" style="display: none;">
+            <div class="stage-modal-backdrop" id="modalBackdrop"></div>
+            <div class="stage-modal-card">
+                <div class="modal-header">
+                    <div class="modal-title">🗺️ VEL RALLYETAPPE / KARTOMRÅDE</div>
+                    <button class="btn-close-modal" id="btnCloseStageModal">✕</button>
+                </div>
+                <div class="modal-subtitle">
+                    Køyr på standardkartet i Årølia eller generer ein heilt ny 1km × 1km 3D-etappe on-the-fly frå OpenStreetMap og ekte terrenghøgder!
+                </div>
+
+                <!-- Presets Section -->
+                <div class="modal-section-title">KLASSISKE ETAPPAR (KLAR TIL KJØRING)</div>
+                <div class="preset-grid">
+                    <div class="preset-card" data-stage="arolia">
+                        <div class="preset-badge">ORIGINAL • STANDARD</div>
+                        <div class="preset-name">Årølia (Molde)</div>
+                        <div class="preset-desc">Kartverkets DTM1 1-meters laserdata, 11 rally-sjekkpunkt frå Årøhallen til skulen.</div>
+                        <button class="btn-load-preset" data-stage="arolia">KJØR ÅRØLIA</button>
+                    </div>
+                    <div class="preset-card" data-stage="trollstigen">
+                        <div class="preset-badge">Fv63 • RAUMA</div>
+                        <div class="preset-name">Trollstigen</div>
+                        <div class="preset-desc">Dei legendariske hårnålssvingane opp fjellet med Stigfossen og vill natur.</div>
+                        <button class="btn-load-preset" data-stage="trollstigen">KJØR TROLLSTIGEN</button>
+                    </div>
+                    <div class="preset-card" data-stage="lysebotn">
+                        <div class="preset-badge">Fv500 • ROGALAND</div>
+                        <div class="preset-name">Lysebotn</div>
+                        <div class="preset-desc">27 spektakulære hårnåler som slynger seg opp frå botnen av Lysefjorden.</div>
+                        <button class="btn-load-preset" data-stage="lysebotn">KJØR LYSEBOTN</button>
+                    </div>
+                    <div class="preset-card" data-stage="monaco">
+                        <div class="preset-badge">MONTE CARLO • BYBANE</div>
+                        <div class="preset-name">Monaco GP Circuit</div>
+                        <div class="preset-desc">Den ikoniske gatebanen ved hamna, Fairmont-hårnåla og tunnelen.</div>
+                        <button class="btn-load-preset" data-stage="monaco">KJØR MONACO</button>
+                    </div>
+                </div>
+
+                <!-- Custom Search / Coordinate Section -->
+                <div class="modal-section-title">EIGE OMRÅDE (1KM × 1KM ON-THE-FLY)</div>
+                <div class="custom-search-box">
+                    <div class="search-input-wrap">
+                        <input type="text" id="inputCustomStage" placeholder="Søk stad (f.eks: Geiranger, Fløyen, Nürburgring) eller GPS (62.101, 7.205)..." />
+                        <button class="btn-hud btn-search" id="btnLoadCustom">HENT & BYGG ETAPPE</button>
+                    </div>
+                    <div class="search-hint">TIPS: Skriv inn kva som helst stadsnamn eller GPS-koordinatar for å hente vegar og høgder i eit 1000m × 1000m utsnitt.</div>
+                </div>
+
+                <!-- Loading State Progress Overlay -->
+                <div id="stageLoadingOverlay" class="stage-loading-overlay" style="display: none;">
+                    <div class="cyber-spinner"></div>
+                    <div class="loading-status-text" id="stageLoadingStatus">Hentar kartdata frå OpenStreetMap...</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Scripts -->
     <script src="js/data/bundle.js"></script>
+    <script src="js/data/presets.js"></script>
     <script src="js/engine/math3d.js"></script>
     <script src="js/engine/terrain.js"></script>
     <script src="js/engine/physics.js"></script>
     <script src="js/engine/wireframeRenderer.js"></script>
     <script src="js/engine/audio.js"></script>
+    <script src="js/engine/dynamicMapLoader.js"></script>
     <script src="js/game/car.js"></script>
     <script src="js/game/track.js"></script>
     <script src="js/game/minimap.js"></script>

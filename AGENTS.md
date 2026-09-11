@@ -69,6 +69,9 @@ Kvar iterasjon i prosjektet er basert på eksplisitte instruksjonar frå brukare
 13. **Mus-Draing Styring og Justert Helikopterkamera:**
     - *Brukar:* "I am also considering a steering mechanism that steers by left clicking and dragging the mouse. I think that will give more control. Also the camera following the car in the helicpotermode above and behind needs to be straight behind car, a little bit closer to the car and a little more above the care (not directly above)"
     - *Løysing:* Implementerte kontinuerleg analog styring ved å klikke og dra venstre museknapp (eller touch-dra på skjerm) med felles target-integrator, dynamisk drag-sikte og prosentvis HUD-vinkelindikator. Oppdaterte `heli_chase` (Heli Bakfra): fjerna sideforskyving for å plassere kameraet rett bak bilen, reduserte avstand frå 22–30m til 13.5–18m (nærare), og auka helningsvinkelen til ~47° (meir opphøgd over taket) med siktepunkt 8m framfor bilen for ideell køyresikt.
+14. **Dynamisk 1km × 1km Kart- og Høgdegenerator (OpenStreetMap + DEM):**
+    - *Brukar:* "Er det mogelig å nytte open street map og velge eit område på feks 1km x 1km og deretter også hente høgdedata og lage spillkartet on the fly? Ja, bevar original kartet som vi har no, og legg til dette som ein opsjon ein kan velge."
+    - *Løysing:* Bygde `DynamicMapLoader` (`js/engine/dynamicMapLoader.js`) og etappeveljar-modal i HUD (`🗺️ VEL KART`). Årølia med Kartverket DTM1 laserhøgder vert bevart 100 % som standard. Spelaren kan bytte etappe til førehandspakka ikoniske baner (Trollstigen, Lysebotn, Monaco GP) eller skrive inn eit vilkårleg stadsnamn eller GPS-koordinatar. Motoren geokodar, hentar Overpass-vegar/bygningar med fleire spegelserverar, samlar høgdedata frå Open-Meteo, projiserer med ekvirektangulær 1km-modell, genererer uavbrotne vegbånd og rallysjekkpunkt, og oppdaterer bilfysikk og minikart on-the-fly utan omlasting.
 
 ---
 

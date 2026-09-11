@@ -44,11 +44,13 @@ class MockCanvas {
 // Load scripts in dependency order
 const scripts = [
     'js/data/bundle.js',
+    'js/data/presets.js',
     'js/engine/math3d.js',
     'js/engine/terrain.js',
     'js/engine/physics.js',
     'js/engine/wireframeRenderer.js',
     'js/engine/audio.js',
+    'js/engine/dynamicMapLoader.js',
     'js/game/car.js',
     'js/game/track.js',
     'js/game/minimap.js'
@@ -170,8 +172,59 @@ console.log(`Car Speed: ${(carPhysics.speed * 3.6).toFixed(1)} km/h`);
 console.log(`Checkpoint Reached: ${track.currentCheckpointIndex}/${track.totalCheckpoints}`);
 
 if (carPhysics.speed > 5.0 && track.currentCheckpointIndex >= 2) {
-    console.log('PASS: Headless integration test succeeded!');
+    console.log('PASS: Headless integration test succeeded for Årølia!');
 } else {
     console.error('FAIL: Car did not make progress');
     process.exit(1);
 }
+
+// Verify Dynamic Stage Generation & Rendering (Trollstigen preset)
+console.log('\nVerifying Dynamic Stage Loader on Trollstigen preset...');
+const trollPreset = window.STAGE_PRESETS.trollstigen;
+const dynStage = window.DynamicMapLoader.buildStageFromData(
+    trollPreset.name,
+    trollPreset.lat,
+    trollPreset.lon,
+    trollPreset.osm,
+    trollPreset.elevations,
+    trollPreset.nx || 16,
+    trollPreset.nz || 16,
+    null
+);
+
+console.log(`Dynamic stage "${dynStage.name}" built with ${dynStage.roads.length} roads and ${dynStage.track.checkpoints.length} checkpoints.`);
+
+// Test car physics re-initialization and rendering on dynamic stage
+carPhysics.terrain = dynStage.terrain;
+carPhysics.roads = dynStage.roads;
+carPhysics.buildings = dynStage.buildings;
+carPhysics.roadIndex = carPhysics.prepareRoads(dynStage.roads);
+carPhysics.reset(dynStage.startPos.x, dynStage.startPos.z, dynStage.startPos.headingRad);
+carPhysics.y = dynStage.startPos.y;
+
+minimap.setStage(
+    dynStage.roads,
+    dynStage.buildings,
+    dynStage.track.checkpoints,
+    dynStage.projection_meta,
+    dynStage.name
+);
+
+// Run 30 physics & render frames on new stage
+for (let f = 0; f < 30; f++) {
+    carPhysics.update(1.0, 0.0, 0.0, false, 1.0 / 60.0);
+    renderer.renderScene(
+        dynStage.terrain,
+        dynStage.roads,
+        dynStage.buildings,
+        [],
+        carModel,
+        carPhysics,
+        dynStage.track
+    );
+    minimap.draw(carPhysics, dynStage.track.currentCheckpointIndex);
+}
+
+console.log(`Dynamic stage test complete! Car moved to (${carPhysics.x.toFixed(1)}, ${carPhysics.y.toFixed(1)}, ${carPhysics.z.toFixed(1)}), speed: ${(carPhysics.speed * 3.6).toFixed(1)} km/h`);
+console.log('PASS: Dynamic stage loading and rendering fully verified!');
+

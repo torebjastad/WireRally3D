@@ -6,14 +6,44 @@ class HUDMinimap {
         this.roads = roads;
         this.buildings = buildings;
         this.checkpoints = checkpoints;
-        this.proj = projMeta.local_to_pixel;
+        this.proj = projMeta ? projMeta.local_to_pixel : null;
+        this.title = 'ÅRØLIA KARTUTSNITT';
+        this.isDynamic = projMeta ? !!projMeta.is_dynamic : false;
+        this.bounds = (projMeta && projMeta.bounds) ? projMeta.bounds : { xMin: -500, xMax: 500, zMin: -500, zMax: 500 };
 
         // Native map slice bounds
-        this.nativeW = projMeta.ref_image_width || 1024;
-        this.nativeH = projMeta.ref_image_height || 576;
+        this.nativeW = (projMeta && projMeta.ref_image_width) || 1024;
+        this.nativeH = (projMeta && projMeta.ref_image_height) || 576;
+    }
+
+    setStage(roads, buildings, checkpoints, projMeta, title = 'KARTUTSNITT') {
+        this.roads = roads || [];
+        this.buildings = buildings || [];
+        this.checkpoints = checkpoints || [];
+        this.title = title;
+        if (projMeta && projMeta.is_dynamic) {
+            this.isDynamic = true;
+            this.bounds = projMeta.bounds || { xMin: -500, xMax: 500, zMin: -500, zMax: 500 };
+        } else if (projMeta) {
+            this.isDynamic = false;
+            this.proj = projMeta.local_to_pixel;
+            this.nativeW = projMeta.ref_image_width || 1024;
+            this.nativeH = projMeta.ref_image_height || 576;
+        }
     }
 
     worldToMapPx(x, z) {
+        if (this.isDynamic && this.bounds) {
+            const pad = 12;
+            const drawW = this.canvas.width - pad * 2;
+            const drawH = this.canvas.height - pad * 2;
+            const u = (x - this.bounds.xMin) / (this.bounds.xMax - this.bounds.xMin || 1.0);
+            const v = (z - this.bounds.zMin) / (this.bounds.zMax - this.bounds.zMin || 1.0);
+            return {
+                x: pad + Math.max(0, Math.min(1.0, u)) * drawW,
+                y: pad + (1.0 - Math.max(0, Math.min(1.0, v))) * drawH // North (+Z) is UP
+            };
+        }
         const px = this.proj.ax * x + this.proj.bx * z + this.proj.cx;
         const py = this.proj.ay * x + this.proj.by * z + this.proj.cy;
         return {
@@ -136,7 +166,7 @@ class HUDMinimap {
         // Minimap Title
         ctx.fillStyle = '#00ffcc';
         ctx.font = '9px monospace';
-        ctx.fillText('ÅRØLIA KARTUTSNITT', 8, 14);
+        ctx.fillText((this.title || 'ÅRØLIA KARTUTSNITT').toUpperCase(), 8, 14);
     }
 }
 

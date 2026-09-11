@@ -64,3 +64,35 @@ Vegane er henta frå **OpenStreetMap (OSM)** via Overpass API:
   - Bygningane har AABB (Axis-Aligned Bounding Boxes) i 2D for rask kollisjonssjekk mot bilen.
 - **Kulisser (`data/scenery.json`):**
   Fjordlinja i sør og karakteristiske tre langs vegen er teikna som enkle wireframe-element.
+
+---
+
+## 6. Dynamisk 1km × 1km Kart- og Høgdemodell (On-the-Fly)
+
+I tillegg til standardkartet for Årølia har spelet ein **on-the-fly generator** ([`dynamicMapLoader.js`](file:///c:/Users/toreb/OneDrive/Code/ÅrøliaRally/js/engine/dynamicMapLoader.js)) som kan hente og bygge eit vilkårleg 1km × 1km område i verda:
+
+1. **Ekvirektangulær Projeksjon mot Lokale Meter:**
+   Gjeve senterkoordinatar $(\phi_0, \lambda_0)$:
+   $$x = (\lambda - \lambda_0) \cdot \frac{\pi}{180} \cdot R \cdot \cos(\phi_0)$$
+   $$z = (\phi - \phi_0) \cdot \frac{\pi}{180} \cdot R$$
+   der $R = 6\,378\,137\text{ m}$ er jordradien (WGS84). Dette gjev sub-millimeter presisjon over eit 1000m × 1000m område med null eksterne bibliotek.
+
+2. **OpenStreetMap Overpass API:**
+   - Hentar alle vegar (`way["highway"]`) og bygningar (`way["building"]`) innanfor utsnittet.
+   - Fallback mellom fleire uavhengige speglar (`overpass.kumi.systems`, `overpass-api.de`, `overpass.private.coffee`).
+   - Klipper og deler vegsegment ved grensa til 1km-boksen slik at rallyet held seg innafor spelverda.
+
+3. **Open-Meteo Høgdemodell (DEM):**
+   - Samplar eit $16 \times 16$ høgdenett over dei 1000 × 1000 metrane.
+   - Sender førespurnader i trygge pakker på $\le 64$ koordinatar for å halde nettlesar-URL under 1500 teikn og unngå 429 rate limits.
+
+4. **Automatisk Rallyløype:**
+   - Finn den lengste og høgast prioriterte vegen i utsnittet.
+   - Set startlinje ved Checkpoint 0, plasserer sjekkpunkt kvar 80–150m, og mållinje ved siste punkt.
+   - Berekner automatisk bilsnuten sitt start-heading $\theta = \text{atan2}(\Delta x, \Delta z)$.
+
+5. **Førehandspakka Ikoniske Etappar ([`presets.js`](file:///c:/Users/toreb/OneDrive/Code/ÅrøliaRally/js/data/presets.js)):**
+   - **Trollstigen (Fv63):** Dei dramatiske hårnålssvingane i Rauma.
+   - **Lysebotn (Fv500):** 27 hårnåler opp frå Lysefjorden.
+   - **Monaco GP Circuit:** Den legendariske gatebanen ved Monte Carlo.
+

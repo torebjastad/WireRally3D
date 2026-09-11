@@ -23,7 +23,12 @@
    - 4 kameravinklar: **Heli Bakfra** (Standard) ➔ **Chase** ➔ **Panser** ➔ **Heli Topp**.
 5. **Prosedyrisk Web Audio Motorlyd:**
    - Sanntids syntese av motorbrøl (sawtooth/triangle oscillatorar) og dekkskrik (resonans-støyfilter ved drift) via Web Audio API.
-6. **Autonom Verifikasjonssyklus:**
+6. **Dynamisk 1km × 1km Kartgenerator (OpenStreetMap + DEM):**
+   - Klikk **🗺️ VEL KART** for å bytte etappe on-the-fly!
+   - Årølia er 100 % bevart som standard originalkart.
+   - Køyr førehandspakka etappar: **Trollstigen (Fv63)**, **Lysebotn (Fv500)** og **Monaco GP Circuit**.
+   - Søk opp eit **vilkårleg stadsnamn eller GPS-koordinatar** i heile verda for å hente vegar og høgder on-the-fly i 1000m × 1000m utsnitt.
+7. **Autonom Verifikasjonssyklus:**
    - Komplett testsuite (`python tools/run_all_tests.py`) med pytest (13 testar), Node.js matrise- og projeksjonstestar, headless spelsimulering (300 frames) og visuelt 3D scenerender.
 
 ---

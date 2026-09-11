@@ -70,6 +70,19 @@ class GameLoop {
             steerValue: 0.0
         };
 
+        // Stage Management (Default to original Årølia)
+        this.originalAroliaStage = {
+            name: 'Årølia (Molde)',
+            terrain: this.terrain,
+            roads: this.roads,
+            buildings: this.buildings,
+            scenery: this.scenery,
+            track: this.track,
+            projection_meta: this.data.projection_meta,
+            startPos: { x: -838.0, y: 39.2, z: -335.0, headingRad: (88.0 * Math.PI) / 180.0 }
+        };
+        this.currentStageName = 'Årølia (Molde)';
+
         // Timing
         this.lastTime = performance.now();
         this.isRunning = false;
@@ -77,6 +90,7 @@ class GameLoop {
         this.setupInputs();
         this.setupMouseSteering();
         this.setupTouchControls();
+        this.setupStageModal();
     }
 
     setupInputs() {
@@ -123,6 +137,12 @@ class GameLoop {
                     const muted = this.audio.toggleMute();
                     const muteBtn = document.getElementById('btnMute');
                     if (muteBtn) muteBtn.innerText = muted ? '🔇 MUTED' : '🔊 LYD';
+                    break;
+                case 'Escape':
+                    const modal = document.getElementById('stageModal');
+                    if (modal && modal.style.display !== 'none') {
+                        modal.style.display = 'none';
+                    }
                     break;
             }
         });
@@ -337,6 +357,160 @@ class GameLoop {
         this.carPhysics.reset(cp.x, cp.z, (cp.heading * Math.PI) / 180.0);
         this.carPhysics.y = cp.y + 0.2;
         this.camModeChanged = true;
+    }
+
+    setupStageModal() {
+        const btnSelect = document.getElementById('btnSelectStage');
+        const modal = document.getElementById('stageModal');
+        const btnClose = document.getElementById('btnCloseStageModal');
+        const backdrop = document.getElementById('modalBackdrop');
+        const overlay = document.getElementById('stageLoadingOverlay');
+        const statusText = document.getElementById('stageLoadingStatus');
+        const btnCustom = document.getElementById('btnLoadCustom');
+        const inputCustom = document.getElementById('inputCustomStage');
+
+        if (!modal) return;
+
+        const openModal = () => {
+            modal.style.display = 'flex';
+            if (inputCustom) inputCustom.focus();
+        };
+
+        const closeModal = () => {
+            modal.style.display = 'none';
+            if (overlay) overlay.style.display = 'none';
+        };
+
+        if (btnSelect) btnSelect.addEventListener('click', openModal);
+        if (btnClose) btnClose.addEventListener('click', closeModal);
+        if (backdrop) backdrop.addEventListener('click', closeModal);
+
+        // Preset cards & buttons
+        const presetCards = document.querySelectorAll('.preset-card, .btn-load-preset');
+        presetCards.forEach(elem => {
+            elem.addEventListener('click', async (e) => {
+                const stageKey = elem.getAttribute('data-stage');
+                if (!stageKey) return;
+                e.stopPropagation();
+
+                if (stageKey === 'arolia') {
+                    this.switchStage(this.originalAroliaStage);
+                    closeModal();
+                    return;
+                }
+
+                if (typeof DynamicMapLoader === 'undefined') {
+                    alert("DynamicMapLoader er ikkje lasta inn enno!");
+                    return;
+                }
+
+                try {
+                    if (overlay) overlay.style.display = 'flex';
+                    if (statusText) statusText.innerText = `Laster ${stageKey.toUpperCase()}...`;
+                    const stage = await DynamicMapLoader.loadStage(stageKey, this.audio, (msg) => {
+                        if (statusText) statusText.innerText = msg;
+                    });
+                    this.switchStage(stage);
+                    closeModal();
+                } catch (err) {
+                    if (statusText) statusText.innerText = `FEIL: ${err.message}`;
+                    setTimeout(() => { if (overlay) overlay.style.display = 'none'; }, 2500);
+                }
+            });
+        });
+
+        // Custom search button and Enter key
+        const handleCustom = async () => {
+            if (!inputCustom) return;
+            const query = inputCustom.value.trim();
+            if (!query) {
+                alert("Vennlegst skriv inn eit stadsnamn eller koordinatar!");
+                return;
+            }
+
+            if (typeof DynamicMapLoader === 'undefined') {
+                alert("DynamicMapLoader er ikkje lasta inn enno!");
+                return;
+            }
+
+            try {
+                if (overlay) overlay.style.display = 'flex';
+                if (statusText) statusText.innerText = `Søker etter "${query}"...`;
+                const stage = await DynamicMapLoader.loadStage(query, this.audio, (msg) => {
+                    if (statusText) statusText.innerText = msg;
+                });
+                this.switchStage(stage);
+                closeModal();
+            } catch (err) {
+                if (statusText) statusText.innerText = `FEIL: ${err.message}`;
+                setTimeout(() => { if (overlay) overlay.style.display = 'none'; }, 3500);
+            }
+        };
+
+        if (btnCustom) btnCustom.addEventListener('click', handleCustom);
+        if (inputCustom) {
+            inputCustom.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleCustom();
+                }
+            });
+        }
+    }
+
+    switchStage(stageData) {
+        if (!stageData) return;
+        this.currentStageName = stageData.name || 'Ukjent etappe';
+
+        // 1. Swap 3D World components
+        this.terrain = stageData.terrain;
+        this.roads = stageData.roads;
+        this.buildings = stageData.buildings;
+        this.scenery = stageData.scenery || [];
+        this.track = stageData.track;
+
+        // 2. Update car physics references & road spatial index
+        this.carPhysics.terrain = this.terrain;
+        this.carPhysics.roads = this.roads;
+        this.carPhysics.buildings = this.buildings;
+        this.carPhysics.roadIndex = this.carPhysics.prepareRoads(this.roads);
+        this.carPhysics.buildingObstacles = this.carPhysics.prepareBuildings(this.buildings);
+
+        // 3. Reset car to stage start position
+        const sp = stageData.startPos || (this.track.checkpoints[0] ? {
+            x: this.track.checkpoints[0].x,
+            y: this.track.checkpoints[0].y + 0.2,
+            z: this.track.checkpoints[0].z,
+            headingRad: (this.track.checkpoints[0].heading * Math.PI) / 180.0
+        } : { x: 0, y: 10, z: 0, headingRad: 0 });
+
+        this.carPhysics.reset(sp.x, sp.z, sp.headingRad);
+        this.carPhysics.y = sp.y;
+        this.camModeChanged = true;
+
+        // 4. Update minimap
+        if (this.minimap) {
+            this.minimap.setStage(
+                this.roads,
+                this.buildings,
+                this.track.checkpoints,
+                stageData.projection_meta,
+                this.currentStageName
+            );
+        }
+
+        // 5. Reset track race state & notify UI
+        this.track.resetRace();
+        if (this.uiBanner) {
+            this.uiBanner.innerText = `ETAPPE: ${this.currentStageName.toUpperCase()}`;
+            this.track.lastSplitMsg = `TRYKK PIL OPP / W FOR Å STARTE ETAPPEN`;
+            this.track.splitMsgTimer = 4.5;
+        }
+
+        const minimapLabel = document.querySelector('.minimap-label');
+        if (minimapLabel) {
+            minimapLabel.innerText = `KART: ${this.currentStageName.toUpperCase()}`;
+        }
     }
 
     updateCamera(dt) {

@@ -25,18 +25,20 @@
 │
 ├── js/
 │   ├── data/
-│   │   └── bundle.js               # Samansmelta datafil (vegar, bygningar, terreng, track, projeksjon)
+│   │   ├── bundle.js               # Samansmelta datafil (vegar, bygningar, terreng, track, projeksjon)
+│   │   └── presets.js              # Førehandspakka etappar for offline/lynrask køyring (Trollstigen, Lysebotn, Monaco)
 │   ├── engine/
 │   │   ├── math3d.js               # Vektorar (Vector3), 4x4 matriser (Matrix4), frustum clipping
 │   │   ├── terrain.js              # Bilineær terrenghøgdesampling og normalvektorar
 │   │   ├── physics.js              # Køyretøysfysikk, hjuloppheng, gir, smart styring, kollisjonar
 │   │   ├── wireframeRenderer.js    # 3D programvarerasteriser, linjeklipping, veg-ribbons
-│   │   └── audio.js                # Web Audio API syntetiserte motorlydar og dekklydar
+│   │   ├── audio.js                # Web Audio API syntetiserte motorlydar og dekklydar
+│   │   └── dynamicMapLoader.js     # On-the-fly etappegenerator frå OpenStreetMap og Open-Meteo DEM
 │   └── game/
 │       ├── car.js                  # 3D wireframe bilmodell og partiklar (eksos/støv)
 │       ├── track.js                # Rallyetappe, sjekkpunktlogikk, rundetider og split-tider
-│       ├── minimap.js              # 2D GPS-minikart kalibrert mot originalkartet
-│       └── gameLoop.js             # Hovudspilløkke, tastaturinngangar, kamera og HUD-oppdatering
+│       ├── minimap.js              # 2D GPS-minikart kalibrert mot originalkartet og dynamiske etappar
+│       └── gameLoop.js             # Hovudspilløkke, tastaturinngangar, kamera, HUD og etappebyte
 │
 ├── data/
 │   ├── arolia_roads.json           # 120+ vektoriserte vegar frå OpenStreetMap
