@@ -1,8 +1,9 @@
 // Vehicle physics engine for Årølia Rally
 class RallyCarPhysics {
-    constructor(terrain, buildings = []) {
+    constructor(terrain, buildings = [], roads = []) {
         this.terrain = terrain;
         this.buildings = buildings;
+        this.roads = roads;
 
         // Vehicle specifications
         this.mass = 1150.0;
@@ -14,10 +15,15 @@ class RallyCarPhysics {
         this.topGearSpeeds = [0.0, 24.0, 44.0, 62.0, 76.0, 90.0];
         this.gravity = 9.81;
 
+        // Spatial index for road surface detection
+        this.roadIndex = this.prepareRoads(roads);
+        this.isOnRoad = true;
+        this.offRoadRatio = 0.0;
+
         // Collision bounding boxes for buildings
         this.buildingObstacles = this.prepareBuildings(buildings);
 
-        this.reset(-850.0, -340.0, 85.0 * Math.PI / 180.0);
+        this.reset(-838.0, -335.0, 88.0 * Math.PI / 180.0);
     }
 
     prepareBuildings(buildings) {
@@ -33,6 +39,71 @@ class RallyCarPhysics {
                 topY: b.base_y + b.height
             };
         });
+    }
+
+    prepareRoads(roads) {
+        if (!roads || !roads.length) return [];
+        return roads.map(r => {
+            const pts = r.points || [];
+            const w = r.width || 7.5;
+            const hw = w * 0.5;
+            let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+            for (let i = 0; i < pts.length; i++) {
+                const p = pts[i];
+                if (p.x < minX) minX = p.x;
+                if (p.x > maxX) maxX = p.x;
+                if (p.z < minZ) minZ = p.z;
+                if (p.z > maxZ) maxZ = p.z;
+            }
+            const segs = [];
+            const n = pts.length;
+            const count = r.is_closed ? n : n - 1;
+            for (let i = 0; i < count; i++) {
+                const p1 = pts[i];
+                const p2 = pts[(i + 1) % n];
+                const dx = p2.x - p1.x;
+                const dz = p2.z - p1.z;
+                const lenSq = dx * dx + dz * dz;
+                if (lenSq > 0.001) {
+                    segs.push({
+                        x1: p1.x,
+                        z1: p1.z,
+                        dx: dx,
+                        dz: dz,
+                        lenSq: lenSq,
+                        hw: hw
+                    });
+                }
+            }
+            return {
+                minX: minX - hw - 4.0,
+                maxX: maxX + hw + 4.0,
+                minZ: minZ - hw - 4.0,
+                maxZ: maxZ + hw + 4.0,
+                segments: segs
+            };
+        });
+    }
+
+    checkOnRoad(x, z, tolerance = 1.2) {
+        if (!this.roadIndex || this.roadIndex.length === 0) return true;
+        for (let i = 0; i < this.roadIndex.length; i++) {
+            const r = this.roadIndex[i];
+            if (x < r.minX || x > r.maxX || z < r.minZ || z > r.maxZ) continue;
+            const segs = r.segments;
+            for (let j = 0; j < segs.length; j++) {
+                const s = segs[j];
+                const t = Math.max(0.0, Math.min(1.0, ((x - s.x1) * s.dx + (z - s.z1) * s.dz) / s.lenSq));
+                const px = s.x1 + t * s.dx;
+                const pz = s.z1 + t * s.dz;
+                const dSq = (x - px) * (x - px) + (z - pz) * (z - pz);
+                const threshold = s.hw + tolerance;
+                if (dSq <= threshold * threshold) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     reset(x, z, headingRad) {
@@ -154,6 +225,11 @@ class RallyCarPhysics {
         let vFwd = this.vx * fx + this.vz * fz;
         let vLat = this.vx * rx + this.vz * rz;
 
+        // Check whether car is on asphalt road or off-road in grass/terrain
+        this.isOnRoad = this.checkOnRoad(this.x, this.z, 1.2);
+        const targetOffRoad = this.isOnRoad ? 0.0 : 1.0;
+        this.offRoadRatio += (targetOffRoad - this.offRoadRatio) * Math.min(1.0, dt * 10.0);
+
         // Gear selection & RPM
         for (let g = 1; g <= 5; g++) {
             if (Math.abs(vFwd) < this.topGearSpeeds[g] || g === 5) {
@@ -180,7 +256,12 @@ class RallyCarPhysics {
             highSpeedTaper = 1.0 - 0.45 * Math.pow(Math.min(1.0, progress), 1.25);
         }
 
+        // Off-road slowdown penalty: heavy drag in grass/dirt and engine power cut above 12 m/s
+        const offRoadDrag = this.offRoadRatio * 14.0;
         let accelForce = throttle * 22.0 * gearRatio * highSpeedTaper;
+        if (this.offRoadRatio > 0.3 && vFwd > 12.0) {
+            accelForce *= Math.max(0.0, 1.0 - (vFwd - 12.0) / 6.0);
+        }
         if (brake > 0 && vFwd < 0.2 && throttle === 0) {
             // Reverse drive
             accelForce = -brake * 10.0;
@@ -189,16 +270,16 @@ class RallyCarPhysics {
         }
 
         let brakeForce = brake * 36.0;
-        const rollingResistance = 0.5 + 0.015 * absV;
+        const rollingResistance = 0.5 + 0.015 * absV + offRoadDrag;
         const aeroDrag = 0.0003 * (vFwd * vFwd);
         const slopeResistance = Math.sin(this.pitch) * this.gravity;
 
         const netFwdAccel = accelForce - (vFwd !== 0 ? Math.sign(vFwd) * brakeForce : 0) - (vFwd !== 0 ? Math.sign(vFwd) * (rollingResistance + aeroDrag) : 0) - slopeResistance;
 
-        // Lateral grip & drift physics
-        let gripFactor = 30.0;
+        // Lateral grip & drift physics (grass feels slicker and looser)
+        let gripFactor = 30.0 - this.offRoadRatio * 14.0;
         if (handbrake) {
-            gripFactor = 6.0; // Reduced grip initiates drift slide!
+            gripFactor = 6.0 - this.offRoadRatio * 2.0;
             brakeForce += 18.0;
         }
 
@@ -223,9 +304,10 @@ class RallyCarPhysics {
 
         this.yaw += this.yawRate * dt;
 
-        // Forward integration
+        // Forward integration (capped while deep off-road)
         vFwd += netFwdAccel * dt;
-        vFwd = Math.max(-18.0, Math.min(this.maxSpeed, vFwd));
+        const effectiveMaxSpeed = this.maxSpeed * (1.0 - this.offRoadRatio * 0.85);
+        vFwd = Math.max(-18.0, Math.min(effectiveMaxSpeed, vFwd));
         vLat += latAccel * dt;
 
         this.vx = vFwd * fx + vLat * rx;

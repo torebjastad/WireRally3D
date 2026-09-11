@@ -3,9 +3,13 @@ import json
 import os
 
 class RallyCarPhysics:
-    def __init__(self, terrain_sampler=None):
+    def __init__(self, terrain_sampler=None, roads=None):
         self.terrain_sampler = terrain_sampler or (lambda x, z: 0.0)
-        self.reset(-850.0, -340.0, math.radians(85.0))
+        self.roads = roads
+        self.road_index = self.prepare_roads(roads)
+        self.is_on_road = True
+        self.off_road_ratio = 0.0
+        self.reset(-838.0, -335.0, math.radians(88.0))
         
         # Vehicle Constants
         self.mass = 1150.0 # kg
@@ -14,6 +18,66 @@ class RallyCarPhysics:
         self.max_speed = 84.0 # m/s (~302 km/h, doubled from 42.0 m/s)
         self.top_gear_speeds = [0.0, 24.0, 44.0, 62.0, 76.0, 90.0] # m/s
         self.gravity = 9.81
+
+    def prepare_roads(self, roads):
+        if not roads:
+            return []
+        road_index = []
+        for r in roads:
+            pts = r.get("points", [])
+            w = r.get("width", 7.5)
+            hw = w * 0.5
+            if not pts:
+                continue
+            xs = [p["x"] for p in pts]
+            zs = [p["z"] for p in pts]
+            min_x = min(xs) - hw - 4.0
+            max_x = max(xs) + hw + 4.0
+            min_z = min(zs) - hw - 4.0
+            max_z = max(zs) + hw + 4.0
+            
+            segs = []
+            n = len(pts)
+            count = n if r.get("is_closed", False) else n - 1
+            for i in range(count):
+                p1 = pts[i]
+                p2 = pts[(i + 1) % n]
+                dx = p2["x"] - p1["x"]
+                dz = p2["z"] - p1["z"]
+                len_sq = dx * dx + dz * dz
+                if len_sq > 0.001:
+                    segs.append({
+                        "x1": p1["x"],
+                        "z1": p1["z"],
+                        "dx": dx,
+                        "dz": dz,
+                        "len_sq": len_sq,
+                        "hw": hw
+                    })
+            road_index.append({
+                "min_x": min_x,
+                "max_x": max_x,
+                "min_z": min_z,
+                "max_z": max_z,
+                "segments": segs
+            })
+        return road_index
+
+    def check_on_road(self, x, z, tolerance=1.2):
+        if not self.road_index:
+            return True
+        for r in self.road_index:
+            if x < r["min_x"] or x > r["max_x"] or z < r["min_z"] or z > r["max_z"]:
+                continue
+            for s in r["segments"]:
+                t = max(0.0, min(1.0, ((x - s["x1"]) * s["dx"] + (z - s["z1"]) * s["dz"]) / s["len_sq"]))
+                px = s["x1"] + t * s["dx"]
+                pz = s["z1"] + t * s["dz"]
+                d_sq = (x - px) ** 2 + (z - pz) ** 2
+                thresh = s["hw"] + tolerance
+                if d_sq <= thresh * thresh:
+                    return True
+        return False
         
     def reset(self, x, z, heading_rad):
         self.x = x
@@ -122,6 +186,11 @@ class RallyCarPhysics:
         v_fwd = self.vx * fx + self.vz * fz
         v_lat = self.vx * rx + self.vz * rz
         
+        # Check whether car is on asphalt road or off-road in grass/terrain
+        self.is_on_road = self.check_on_road(self.x, self.z, 1.2)
+        target_off_road = 0.0 if self.is_on_road else 1.0
+        self.off_road_ratio += (target_off_road - self.off_road_ratio) * min(1.0, dt * 10.0)
+
         # Transmission & Engine RPM
         for g in range(1, 6):
             if abs(v_fwd) < self.top_gear_speeds[g] or g == 5:
@@ -140,8 +209,12 @@ class RallyCarPhysics:
             high_speed_taper = 1.0 - 0.45 * (min(1.0, progress) ** 1.25)
             
         accel_force = throttle * 22.0 * gear_ratio * high_speed_taper
+        if self.off_road_ratio > 0.3 and v_fwd > 12.0:
+            accel_force *= max(0.0, 1.0 - (v_fwd - 12.0) / 6.0)
+
         brake_force = brake * 36.0
-        rolling_resistance = 0.5 + 0.015 * abs_v
+        off_road_drag = self.off_road_ratio * 14.0
+        rolling_resistance = 0.5 + 0.015 * abs_v + off_road_drag
         aero_drag = 0.0003 * (v_fwd ** 2)
         
         # Slope resistance (gravity component along slope)
@@ -150,10 +223,10 @@ class RallyCarPhysics:
         # Forward acceleration
         net_fwd_accel = accel_force - math.copysign(brake_force, v_fwd if abs(v_fwd) > 0.1 else 1.0) - math.copysign(rolling_resistance + aero_drag, v_fwd) - slope_resistance
         
-        # Lateral friction (grip vs drift)
-        grip_factor = 30.0 # lateral grip rate
+        # Lateral friction (grip vs drift, grass feels slicker)
+        grip_factor = 30.0 - self.off_road_ratio * 14.0
         if handbrake:
-            grip_factor = 6.0 # reduced grip = drift!
+            grip_factor = 6.0 - self.off_road_ratio * 2.0
             brake_force += 18.0
             
         lat_accel = -v_lat * grip_factor
@@ -175,9 +248,10 @@ class RallyCarPhysics:
 
         self.yaw += self.yaw_rate * dt
         
-        # Update velocities
+        # Update velocities (clamped while deep off-road)
         v_fwd += net_fwd_accel * dt
-        v_fwd = max(-18.0, min(self.max_speed, v_fwd))
+        effective_max_speed = self.max_speed * (1.0 - self.off_road_ratio * 0.85)
+        v_fwd = max(-18.0, min(effective_max_speed, v_fwd))
         v_lat += lat_accel * dt
         
         # Recombine to world velocity
@@ -209,6 +283,8 @@ def simulate_rally_lap(max_time=120.0):
         track = json.load(f)
     with open(os.path.join("data", "arolia_terrain.json"), "r", encoding="utf-8") as f:
         terrain = json.load(f)
+    with open(os.path.join("data", "arolia_roads.json"), "r", encoding="utf-8") as f:
+        roads = json.load(f)
         
     grid_step = terrain["grid_step"]
     x_min = terrain["x_min"]
@@ -233,7 +309,7 @@ def simulate_rally_lap(max_time=120.0):
         return (y00*(1-fu) + y10*fu)*(1-fv) + (y01*(1-fu) + y11*fu)*fv
 
     checkpoints = track["checkpoints"]
-    car = RallyCarPhysics(terrain_sampler=terrain_height)
+    car = RallyCarPhysics(terrain_sampler=terrain_height, roads=roads)
     start_cp = checkpoints[0]
     car.reset(start_cp["x"], start_cp["z"], math.radians(start_cp["heading"]))
     

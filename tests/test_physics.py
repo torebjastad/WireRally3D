@@ -106,3 +106,50 @@ def test_car_follows_downhill_and_uphill_slopes():
     print(f"Uphill test: Car Pitch = {math.degrees(car.pitch):.2f} deg")
     assert car.pitch > 0.05, f"Car nose did not pitch up on uphill slope: {car.pitch}"
 
+def test_off_road_slowdown_penalty():
+    """Verify that driving off-road applies drag penalty, caps top speed, and decelerates car."""
+    # Define a single straight road corridor along Z axis at X=0, width 8m
+    roads = [{
+        "osm_id": 1,
+        "name": "Test Highway",
+        "type": "secondary",
+        "width": 8.0,
+        "points": [{"x": 0.0, "z": -200.0}, {"x": 0.0, "z": 200.0}],
+        "is_closed": False
+    }]
+
+    dt = 1.0 / 60.0
+
+    # 1. On-road car: driving along center of road
+    car_on_road = RallyCarPhysics(terrain_sampler=lambda x, z: 0.0, roads=roads)
+    car_on_road.reset(0.0, 0.0, 0.0) # On-road at x=0, z=0 heading +Z
+    for _ in range(180): # 3 seconds full throttle
+        car_on_road.update(throttle=1.0, steer=0.0, brake=0.0, handbrake=False, dt=dt)
+
+    assert car_on_road.is_on_road, "Car on centerline should be detected as on-road"
+    assert car_on_road.off_road_ratio < 0.05, "Car on road should have near-zero off-road ratio"
+    assert car_on_road.speed > 25.0, f"Car on road should accelerate freely: {car_on_road.speed:.1f} m/s"
+
+    # 2. Off-road car: driving in terrain at X=40 (far outside 8m road)
+    car_off_road = RallyCarPhysics(terrain_sampler=lambda x, z: 0.0, roads=roads)
+    car_off_road.reset(40.0, 0.0, 0.0) # Off-road at x=40, z=0 heading +Z
+    for _ in range(180): # 3 seconds full throttle
+        car_off_road.update(throttle=1.0, steer=0.0, brake=0.0, handbrake=False, dt=dt)
+
+    assert not car_off_road.is_on_road, "Car at x=40 should be detected as off-road"
+    assert car_off_road.off_road_ratio > 0.9, "Off-road ratio should ramp up close to 1.0"
+    assert car_off_road.speed <= 13.0, f"Off-road top speed should be capped near 12 m/s: {car_off_road.speed:.1f} m/s"
+    print(f"\nOn-road speed after 3s: {car_on_road.speed*3.6:.1f} km/h vs Off-road speed: {car_off_road.speed*3.6:.1f} km/h")
+
+    # 3. Off-road deceleration: High-speed car entering terrain slows down automatically
+    car_decel = RallyCarPhysics(terrain_sampler=lambda x, z: 0.0, roads=roads)
+    car_decel.reset(40.0, 0.0, 0.0)
+    car_decel.vx = 0.0
+    car_decel.vz = 50.0 # 50 m/s (~180 km/h) into grass
+    car_decel.speed = 50.0
+    for _ in range(180): # 3 seconds in grass even with full throttle
+        car_decel.update(throttle=1.0, steer=0.0, brake=0.0, handbrake=False, dt=dt)
+
+    print(f"Off-road entry from 180 km/h decelerated to: {car_decel.speed*3.6:.1f} km/h in 3s")
+    assert car_decel.speed < 15.0, f"Off-road car failed to brake down to grass crawl speed: {car_decel.speed:.1f} m/s"
+

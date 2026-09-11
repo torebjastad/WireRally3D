@@ -71,7 +71,7 @@ const data = window.AROLIA_DATA;
 if (!data) throw new Error('Data bundle missing!');
 
 const terrain = new window.Terrain(data.arolia_terrain);
-const carPhysics = new window.RallyCarPhysics(terrain, data.arolia_buildings);
+const carPhysics = new window.RallyCarPhysics(terrain, data.arolia_buildings, data.arolia_roads);
 const carModel = new window.WireframeCar();
 const track = new window.RallyTrack(data.rally_track, null);
 const renderCanvas = new MockCanvas(1280, 720);

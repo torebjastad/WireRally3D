@@ -60,6 +60,9 @@ Kvar iterasjon i prosjektet er basert på eksplisitte instruksjonar frå brukare
 10. **Speedometer-mismatch og progressiv akselerasjon:**
     - *Brukar:* "Now there seems to be a bit mismatch again between what the speedometer shows and how the car moves. Also: The actual max speed now is ok (game mechanically wise), but it needs to be a bit slower acelleration to reach the very upper part of the speed."
     - *Løysing:* Sikra at speedometeret nyttar kalibreringsfaktoren 2.2 (toppfart ~185 km/h visuelt), og la inn ein progressiv high-speed taper over 45 m/s og aerodynamisk luftmotstand ($0.0003 \cdot v^2$) slik at klatringa frå 150 til 185 km/h krev eit langt rettstrekk.
+11. **Off-road brems og overflatedeteksjon:**
+    - *Brukar:* "Kan du legge til at bilen bremsar kvar gang ein er utanfor vegen? Slik at ein må halde vegen for å greie holde farta."
+    - *Løysing:* Implementerte 2D romleg vegsegment-indeksering mot OpenStreetMap-vegane (`checkOnRoad`), progressiv grasrulle-motstand (+14 m/s² motstand), avkapping av motoreffekt over 12 m/s utanfor veg, redusert sidegrep i gras, visuell HUD-varsling (`⚠️ UTANFOR VEGEN`), og justerte dei 11 rally-sjekkpunkta nøyaktig langs Årølivegens asfaltkorridor.
 
 ---
 
@@ -72,13 +75,13 @@ Prosjektet er dokumentert i detalj gjennom følgjande modular under [`docs/`](fi
 2. **[`docs/map_and_terrain.md`](file:///c:/Users/toreb/OneDrive/Code/ÅrøliaRally/docs/map_and_terrain.md) — Kart og Terreng:**
    Geografisk opphav, Kartverkets DTM1 høgdemodell, sub-piksel affin kalibrering mot biletet (RMS 0.86 px), og samanhengande vegbånd (road ribbons).
 3. **[`docs/vehicle_physics.md`](file:///c:/Users/toreb/OneDrive/Code/ÅrøliaRally/docs/vehicle_physics.md) — Køyretøysfysikk:**
-   4-hjuls bakkekontakt, smart tastaturstyring, gir og drivlinje, aerodynamisk drag, brekksladd, hopp og kollisjonsrespons.
+   4-hjuls bakkekontakt, overflatedeteksjon (asfalt vs gras/off-road), smart tastaturstyring, gir og drivlinje, aerodynamisk drag, brekksladd, hopp og kollisjonsrespons.
 4. **[`docs/camera_and_rendering.md`](file:///c:/Users/toreb/OneDrive/Code/ÅrøliaRally/docs/camera_and_rendering.md) — Kamera og 3D Rendering:**
    3D linjerasteriser, analytisk near-plane line clipping, dei 4 kameramodusane (`heli_chase` som standard), dynamisk farts-FOV og neonfargepalett.
 5. **[`docs/gameplay_and_audio.md`](file:///c:/Users/toreb/OneDrive/Code/ÅrøliaRally/docs/gameplay_and_audio.md) — Gameplay, HUD og Lyd:**
-   Rallyetappen frå Årøhallen til Årølia skole, tidtaking og sjekkpunkt, instrument-HUD, 2D minikart og Web Audio prosedyrisk lydmotor.
+   Rallyetappen frå Årøhallen til Årølia skole (11 sjekkpunkt), tidtaking, HUD med off-road åtvaring, 2D minikart og Web Audio prosedyrisk lydmotor.
 6. **[`docs/testing_and_verification.md`](file:///c:/Users/toreb/OneDrive/Code/ÅrøliaRally/docs/testing_and_verification.md) — Testing og Verifikasjon:**
-   Den autonome verifikasjonssløyfa (`python tools/run_all_tests.py`), pytest (12 testar), Node.js matrisetestar, headless spelsimulering og biletbevis.
+   Den autonome verifikasjonssløyfa (`python tools/run_all_tests.py`), pytest (13 testar), Node.js matrisetestar, headless spelsimulering og biletbevis.
 
 ---
 

@@ -19,7 +19,7 @@ class GameLoop {
 
         this.audio = new RallyAudio();
         this.track = new RallyTrack(this.data.rally_track, this.audio);
-        this.carPhysics = new RallyCarPhysics(this.terrain, this.buildings);
+        this.carPhysics = new RallyCarPhysics(this.terrain, this.buildings, this.roads);
         this.carModel = new WireframeCar();
         this.minimap = new HUDMinimap(
             this.minimapCanvas,
@@ -54,6 +54,7 @@ class GameLoop {
         this.uiCheckpoint = document.getElementById('valCheckpoint');
         this.uiBanner = document.getElementById('bannerNotice');
         this.uiRpmBar = document.getElementById('rpmBarFill');
+        this.uiOffroad = document.getElementById('offroadWarning');
 
         // Timing
         this.lastTime = performance.now();
@@ -342,6 +343,10 @@ class GameLoop {
             } else {
                 this.uiBanner.style.opacity = '0.0';
             }
+        }
+
+        if (this.uiOffroad) {
+            this.uiOffroad.style.display = this.carPhysics.isOnRoad ? 'none' : 'block';
         }
     }
 

@@ -83,3 +83,28 @@ Dette gjer at bilen akselerer kraftfullt og snertent opp til 120 km/h, medan det
   Viss terrenget fell brått meir enn $0.4 \text{ m}$ under hjula i høg fart ($v > 16 \text{ m/s}$), mistar bilen bakkekontakt (`isGrounded = false`). Bilen flyg i ballistisk boge styrt av tyngdekrafta og landar mjukt med demparrespons.
 - **Kollisjonar:**
   Bygningar vert sjekka mot bilens omkrins. Ved kollisjon sprett bilen elastisk tilbake og det sprutar gnistpartiklar.
+
+---
+
+## 6. Overflatedeteksjon og Off-Road Bremsing
+
+For å sikre at rallysjåføren må halde seg på vegen for å oppretthalde farta, har spelet kontinuerleg overflatedeteksjon:
+
+1. **Romleg 2D vegsegment-indeks (`checkOnRoad`):**
+   - Kvart vegsegment frå OpenStreetMap (`arolia_roads.json`) har ei definert vegbreidde ($w$, typisk $7.5\text{ m}$ for hovudvegar, $5.0\text{ m}$ for bustadvegar) pluss ein toleransemargin på $1.2\text{ m}$.
+   - Bilens posisjon $(x, z)$ vert projisert ortogonalt inn på næraste vegsegment med bounding-box-førehandssortering.
+2. **Progressiv overflateovergang (`offRoadRatio`):**
+   - Når bilen køyrer av vegen, aukar `offRoadRatio` jamt frå $0.0$ (asfalt) til $1.0$ (gras/terreng) med filterrate `dt * 10.0`.
+3. **Fysiske konsekvensar i gras/terreng:**
+   - **Grasrullemotstand (Off-road drag):**
+     $$F_{\text{offroadDrag}} = \text{offRoadRatio} \times 14.0\text{ m/s}^2$$
+     Bilen bremsar kraftig opp så snart hjula rullar ut i terrenget.
+   - **Avkapping av motoreffekt:**
+     Når $\text{offRoadRatio} > 0.3$ og farten overstig $12.0\text{ m/s}$ (~$26\text{ km/h}$), vert gasspådraget kutta ned til null.
+   - **Fartssperre i terreng:**
+     Maksimal framoverfart er avgrensa:
+     $$v_{\text{max, eff}} = v_{\text{max}} \times (1.0 - \text{offRoadRatio} \times 0.85)$$
+     I terrenget er toppfart avgrensa til rundt $12.6\text{ m/s}$ (~$27\text{ km/h}$).
+   - **Sleipare underlag:**
+     Sidegrepet fell frå $30.0$ ned til $16.0$, slik at bilen sklir meir sidelengs på vått gras.
+

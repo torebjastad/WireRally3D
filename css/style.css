@@ -199,6 +199,25 @@ body, html {
     color: #ffff00;
 }
 
+.offroad-warning {
+    color: #ff0055;
+    background: rgba(255, 0, 85, 0.15);
+    border: 1px solid #ff0055;
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+    text-align: center;
+    animation: blink-warning 0.5s infinite alternate;
+}
+
+@keyframes blink-warning {
+    from { opacity: 0.5; }
+    to { opacity: 1.0; }
+}
+
 .rpm-bar-container {
     width: 170px;
     height: 10px;

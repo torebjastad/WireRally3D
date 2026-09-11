@@ -1,11 +1,11 @@
 # Gameplay, HUD og Lyd — Årølia Rally 3D
 
 ## 1. Rallyetappen: Årøhallen til Årølia Skole
-Etappen følgjer den hovudsaklege vegen gjennom heile Årølia:
-- **Start:** Ved Årøhallen ($X = -850, Z = -340$)
-- **Trasé:** Gjennom Kringstadstien, forbi bustadfeltet, gjennom midt-rundkøyringa i Årølivegen og opp bakken mot aust.
-- **Mål:** Ved Årølia skole ($X = 625, Z = 88$)
-- **Sjekkpunkt:** 9 sjekkpunktportar (`data/rally_track.json`) som må passerast i rekkjefølgje.
+Etappen følgjer den asfalterte hovudvegen gjennom heile Årølia (Årølivegen):
+- **Start:** Ved Årøhallen ($X = -838, Z = -335$, kurs $88^\circ$ mot aust).
+- **Trasé:** Startar på Årølivegen ved Årøhallen, følgjer svingane forbi bustadområda, gjennom midt-rundkøyringa i Årølivegen og klatrar opp bakkane mot aust.
+- **Mål:** Like ovanfor Årølia skole ($X = 688, Z = 74$).
+- **Sjekkpunkt:** 11 sjekkpunktportar (`data/rally_track.json`) lagde nøyaktig langs vegkorridoren, slik at ein må følgje vegen for å ta sjekkpunkta.
 - **Målgang & Tider:**
   - Viser live tidtaking i formatet `M:SS.ss`.
   - Split-tider og sektor-meldinger i stort HUD-banner.
@@ -14,7 +14,11 @@ Etappen følgjer den hovudsaklege vegen gjennom heile Årølia:
 ---
 
 ## 2. Førar-HUD og Instrumentpanel
-Plassert nede til høgre og oppe til venstre for uforstyrra sikt:
+Plassert nede til høgre, i midten og oppe til venstre:
+
+### Off-Road Åtvaringsbanner (`#offroadWarning`)
+- Når bilen rullar utanfor asfaltvegen, kjem det opp eit blinkande oransje og raudt åtvaringsskilt i midten av skjermen: `⚠️ UTANFOR VEGEN`.
+- Skiltet indikerer at motoren er kutta og grasrullemotstanden bremsar bilen.
 
 ### Speedometer og Turtall
 - **Kalibrert Fartsmåling ($v \times 2.2$):**
