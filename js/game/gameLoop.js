@@ -39,8 +39,9 @@ class GameLoop {
         };
 
         // Camera
-        this.cameraModes = ['chase', 'hood', 'heli'];
+        this.cameraModes = ['chase', 'hood', 'heli_chase', 'heli_top'];
         this.currentCamIdx = 0;
+        this.camModeChanged = false;
         this.camPos = new Vector3(this.carPhysics.x, this.carPhysics.y + 3.0, this.carPhysics.z - 7.0);
         this.camTarget = new Vector3(this.carPhysics.x, this.carPhysics.y + 1.2, this.carPhysics.z);
 
@@ -184,9 +185,16 @@ class GameLoop {
 
     cycleCamera() {
         this.currentCamIdx = (this.currentCamIdx + 1) % this.cameraModes.length;
+        this.camModeChanged = true;
         const mode = this.cameraModes[this.currentCamIdx];
+        const labels = {
+            chase: 'CHASE',
+            hood: 'PANSER',
+            heli_chase: 'HELI SKRÅTT',
+            heli_top: 'HELI TOPP'
+        };
         const btn = document.getElementById('btnCam');
-        if (btn) btn.innerText = `🎥 KAMERA: ${mode.toUpperCase()}`;
+        if (btn) btn.innerText = `🎥 KAMERA: ${labels[mode] || mode.toUpperCase()}`;
     }
 
     resetToTrack() {
@@ -195,6 +203,7 @@ class GameLoop {
         const cp = this.track.checkpoints[cpIdx] || this.track.checkpoints[0];
         this.carPhysics.reset(cp.x, cp.z, (cp.heading * Math.PI) / 180.0);
         this.carPhysics.y = cp.y + 0.2;
+        this.camModeChanged = true;
     }
 
     updateCamera(dt) {
@@ -212,13 +221,22 @@ class GameLoop {
             const groundBehind = this.terrain ? this.terrain.getHeight(targetCamX, targetCamZ) : car.y;
             const targetCamY = Math.max(car.y + 2.5 + (car.speed / car.maxSpeed) * 0.8, groundBehind + 1.8);
 
-            this.camPos.x += (targetCamX - this.camPos.x) * Math.min(1.0, dt * 8.0);
-            this.camPos.y += (targetCamY - this.camPos.y) * Math.min(1.0, dt * 8.0);
-            this.camPos.z += (targetCamZ - this.camPos.z) * Math.min(1.0, dt * 8.0);
-
             const lookAhead = 8.0 + car.speed * 0.3;
             const pitchOffset = Math.sin(car.pitch) * lookAhead;
-            this.camTarget.set(car.x + fx * lookAhead, car.y + 1.2 + pitchOffset, car.z + fz * lookAhead);
+            const targetX = car.x + fx * lookAhead;
+            const targetY = car.y + 1.2 + pitchOffset;
+            const targetZ = car.z + fz * lookAhead;
+
+            if (this.camModeChanged || Math.hypot(this.camPos.x - targetCamX, this.camPos.z - targetCamZ) > 40.0) {
+                this.camPos.set(targetCamX, targetCamY, targetCamZ);
+                this.camTarget.set(targetX, targetY, targetZ);
+                this.camModeChanged = false;
+            } else {
+                this.camPos.x += (targetCamX - this.camPos.x) * Math.min(1.0, dt * 8.0);
+                this.camPos.y += (targetCamY - this.camPos.y) * Math.min(1.0, dt * 8.0);
+                this.camPos.z += (targetCamZ - this.camPos.z) * Math.min(1.0, dt * 8.0);
+                this.camTarget.set(targetX, targetY, targetZ);
+            }
         } else if (mode === 'hood') {
             // First-person rally cockpit view pitched with the car
             const hoodPitchY = Math.sin(car.pitch) * 0.4;
@@ -226,13 +244,59 @@ class GameLoop {
             const lookAhead = 25.0;
             const pitchOffset = Math.sin(car.pitch) * lookAhead;
             this.camTarget.set(car.x + fx * lookAhead, car.y + 0.8 + pitchOffset, car.z + fz * lookAhead);
-        } else if (mode === 'heli') {
+            this.camModeChanged = false;
+        } else if (mode === 'heli_chase') {
+            // Lazy diagonal helicopter chase camera ("skrått bakfra, høyt oppe, litt lazy")
+            const rx = Math.cos(car.yaw);
+            const rz = -Math.sin(car.yaw);
+            const speedRatio = car.speed / car.maxSpeed;
+            const distBack = 22.0 + speedRatio * 8.0;
+            const distSide = 10.0 + speedRatio * 4.0;
+            const baseHeliHeight = 18.0 + speedRatio * 6.0;
+
+            const idealCamX = car.x - fx * distBack + rx * distSide;
+            const idealCamZ = car.z - fz * distBack + rz * distSide;
+            const groundUnderCam = this.terrain ? this.terrain.getHeight(idealCamX, idealCamZ) : car.y;
+            const idealCamY = Math.max(car.y + baseHeliHeight, groundUnderCam + 12.0);
+
+            const lookAhead = 4.0 + car.speed * 0.25;
+            const targetX = car.x + fx * lookAhead;
+            const targetY = car.y + 1.2;
+            const targetZ = car.z + fz * lookAhead;
+
+            if (this.camModeChanged || Math.hypot(this.camPos.x - idealCamX, this.camPos.z - idealCamZ) > 50.0) {
+                this.camPos.set(idealCamX, idealCamY, idealCamZ);
+                this.camTarget.set(targetX, targetY, targetZ);
+                this.camModeChanged = false;
+            } else {
+                // Smooth, lazy cinematic tracking
+                const lazyPosRate = Math.min(1.0, dt * 2.2);
+                this.camPos.x += (idealCamX - this.camPos.x) * lazyPosRate;
+                this.camPos.y += (idealCamY - this.camPos.y) * Math.min(1.0, dt * 1.8);
+                this.camPos.z += (idealCamZ - this.camPos.z) * lazyPosRate;
+
+                const lazyTargetRate = Math.min(1.0, dt * 3.5);
+                this.camTarget.x += (targetX - this.camTarget.x) * lazyTargetRate;
+                this.camTarget.y += (targetY - this.camTarget.y) * lazyTargetRate;
+                this.camTarget.z += (targetZ - this.camTarget.z) * lazyTargetRate;
+            }
+        } else if (mode === 'heli_top') {
             // Overhead tactical map view
-            const heliHeight = 45.0;
-            this.camPos.x += (car.x - this.camPos.x) * Math.min(1.0, dt * 6.0);
-            this.camPos.y += (car.y + heliHeight - this.camPos.y) * Math.min(1.0, dt * 6.0);
-            this.camPos.z += ((car.z - 15.0) - this.camPos.z) * Math.min(1.0, dt * 6.0);
-            this.camTarget.set(car.x, car.y, car.z);
+            const heliHeight = 48.0;
+            const targetCamX = car.x;
+            const targetCamY = car.y + heliHeight;
+            const targetCamZ = car.z - 15.0;
+
+            if (this.camModeChanged || Math.hypot(this.camPos.x - targetCamX, this.camPos.z - targetCamZ) > 60.0) {
+                this.camPos.set(targetCamX, targetCamY, targetCamZ);
+                this.camTarget.set(car.x, car.y, car.z);
+                this.camModeChanged = false;
+            } else {
+                this.camPos.x += (targetCamX - this.camPos.x) * Math.min(1.0, dt * 5.0);
+                this.camPos.y += (targetCamY - this.camPos.y) * Math.min(1.0, dt * 5.0);
+                this.camPos.z += (targetCamZ - this.camPos.z) * Math.min(1.0, dt * 5.0);
+                this.camTarget.set(car.x, car.y, car.z);
+            }
         }
 
         this.renderer.setCamera(this.camPos, this.camTarget);

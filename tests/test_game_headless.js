@@ -109,11 +109,49 @@ for (let frame = 0; frame < 300; frame++) {
     carModel.updateParticles(dt);
     track.update(carPhysics, dt);
 
-    // Update camera and render
+    // Test all 4 camera modes across simulation segments
     const fx = Math.sin(carPhysics.yaw);
     const fz = Math.cos(carPhysics.yaw);
-    const camPos = new window.Vector3(carPhysics.x - fx * 7.0, carPhysics.y + 3.0, carPhysics.z - fz * 7.0);
-    const camTarget = new window.Vector3(carPhysics.x + fx * 15.0, carPhysics.y + 1.2, carPhysics.z + fz * 15.0);
+    const modeIdx = Math.floor(frame / 75) % 4;
+    const mode = ['chase', 'hood', 'heli_chase', 'heli_top'][modeIdx];
+
+    let camPos, camTarget;
+    if (mode === 'chase') {
+        const dist = 6.2 + (carPhysics.speed / carPhysics.maxSpeed) * 2.8;
+        const targetCamX = carPhysics.x - fx * dist;
+        const targetCamZ = carPhysics.z - fz * dist;
+        const groundBehind = terrain.getHeight(targetCamX, targetCamZ);
+        const targetCamY = Math.max(carPhysics.y + 2.5, groundBehind + 1.8);
+        camPos = new window.Vector3(targetCamX, targetCamY, targetCamZ);
+        camTarget = new window.Vector3(carPhysics.x + fx * 10.0, carPhysics.y + 1.2, carPhysics.z + fz * 10.0);
+    } else if (mode === 'hood') {
+        camPos = new window.Vector3(carPhysics.x + fx * 0.4, carPhysics.y + 1.1, carPhysics.z + fz * 0.4);
+        camTarget = new window.Vector3(carPhysics.x + fx * 25.0, carPhysics.y + 0.8, carPhysics.z + fz * 25.0);
+    } else if (mode === 'heli_chase') {
+        const rx = Math.cos(carPhysics.yaw);
+        const rz = -Math.sin(carPhysics.yaw);
+        const speedRatio = carPhysics.speed / carPhysics.maxSpeed;
+        const distBack = 22.0 + speedRatio * 8.0;
+        const distSide = 10.0 + speedRatio * 4.0;
+        const baseHeliHeight = 18.0 + speedRatio * 6.0;
+
+        const idealCamX = carPhysics.x - fx * distBack + rx * distSide;
+        const idealCamZ = carPhysics.z - fz * distBack + rz * distSide;
+        const groundUnderCam = terrain.getHeight(idealCamX, idealCamZ);
+        const idealCamY = Math.max(carPhysics.y + baseHeliHeight, groundUnderCam + 12.0);
+
+        camPos = new window.Vector3(idealCamX, idealCamY, idealCamZ);
+        camTarget = new window.Vector3(carPhysics.x + fx * 4.0, carPhysics.y + 1.2, carPhysics.z + fz * 4.0);
+
+        if (idealCamY < groundUnderCam + 11.9) {
+            throw new Error(`Heli chase clearance violated: camY=${idealCamY}, ground=${groundUnderCam}`);
+        }
+    } else {
+        const heliHeight = 48.0;
+        camPos = new window.Vector3(carPhysics.x, carPhysics.y + heliHeight, carPhysics.z - 15.0);
+        camTarget = new window.Vector3(carPhysics.x, carPhysics.y, carPhysics.z);
+    }
+
     renderer.setCamera(camPos, camTarget);
 
     renderer.renderScene(
