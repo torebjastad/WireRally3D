@@ -72,6 +72,9 @@ Kvar iterasjon i prosjektet er basert på eksplisitte instruksjonar frå brukare
 14. **Dynamisk 1km × 1km Kart- og Høgdegenerator (OpenStreetMap + DEM):**
     - *Brukar:* "Er det mogelig å nytte open street map og velge eit område på feks 1km x 1km og deretter også hente høgdedata og lage spillkartet on the fly? Ja, bevar original kartet som vi har no, og legg til dette som ein opsjon ein kan velge."
     - *Løysing:* Bygde `DynamicMapLoader` (`js/engine/dynamicMapLoader.js`) og etappeveljar-modal i HUD (`🗺️ VEL KART`). Årølia med Kartverket DTM1 laserhøgder vert bevart 100 % som standard. Spelaren kan bytte etappe til førehandspakka ikoniske baner (Trollstigen, Lysebotn, Monaco GP) eller skrive inn eit vilkårleg stadsnamn eller GPS-koordinatar. Motoren geokodar, hentar Overpass-vegar/bygningar med fleire spegelserverar, samlar høgdedata frå Open-Meteo, projiserer med ekvirektangulær 1km-modell, genererer uavbrotne vegbånd og rallysjekkpunkt, og oppdaterer bilfysikk og minikart on-the-fly utan omlasting.
+15. **Tastatur- og mus-isolasjon i tekstfelt (Søking etter stader):**
+    - *Brukar:* "Når eg skriv in stedsnavn for å velge fritt kart, so kan eg ikkje bruke w a s d fordi dei er låst til styringa av bilen..."
+    - *Løysing:* Oppdaterte `setupInputs()` og `setupMouseSteering()` i `js/game/gameLoop.js` til å sjekke om hendinga kjem frå eit tekstfelt (`INPUT`, `TEXTAREA` eller `contenteditable`). Køyretastane (W, A, S, D, Space, R, C, T, M) og `preventDefault()` vert omgått slik at alle teikn kan skrivast uforstyrra i søkeboksen. `clearKeys()` nullstiller alle køyretastar ved modalopning og feltfokus, og musestyring vert blokkert ved klikk inne i modalen.
 
 ---
 

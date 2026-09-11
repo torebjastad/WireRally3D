@@ -93,10 +93,31 @@ class GameLoop {
         this.setupStageModal();
     }
 
+    clearKeys() {
+        this.keys.forward = false;
+        this.keys.backward = false;
+        this.keys.left = false;
+        this.keys.right = false;
+        this.keys.handbrake = false;
+    }
+
     setupInputs() {
         window.addEventListener('keydown', (e) => {
             // Audio init on first user gesture
             if (!this.audio.initialized) this.audio.init();
+
+            // Do not intercept keystrokes if the user is typing in an input or textarea
+            const target = e.target;
+            if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+                if (e.code === 'Escape') {
+                    const modal = document.getElementById('stageModal');
+                    if (modal && modal.style.display !== 'none') {
+                        modal.style.display = 'none';
+                        target.blur();
+                    }
+                }
+                return; // Let user type W, A, S, D, Space, R, C, etc. into the input box!
+            }
 
             switch (e.code) {
                 case 'KeyW':
@@ -148,6 +169,11 @@ class GameLoop {
         });
 
         window.addEventListener('keyup', (e) => {
+            const target = e.target;
+            if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+                return;
+            }
+
             switch (e.code) {
                 case 'KeyW':
                 case 'ArrowUp':
@@ -210,8 +236,8 @@ class GameLoop {
 
         window.addEventListener('mousedown', (e) => {
             if (e.button !== 0) return; // Left mouse button only
-            // Don't intercept button clicks on HUD elements
-            if (e.target && e.target.closest && e.target.closest('.controls-panel, .minimap-wrapper, .touch-controls, button')) return;
+            // Don't intercept button clicks on HUD elements or modal dialogs/inputs
+            if (e.target && e.target.closest && e.target.closest('.controls-panel, .minimap-wrapper, .touch-controls, .stage-modal, button, input, textarea')) return;
             onDragStart(e.clientX, e.clientY);
         });
 
@@ -372,14 +398,23 @@ class GameLoop {
         if (!modal) return;
 
         const openModal = () => {
+            this.clearKeys();
             modal.style.display = 'flex';
-            if (inputCustom) inputCustom.focus();
+            if (inputCustom) {
+                inputCustom.focus();
+            }
         };
 
         const closeModal = () => {
+            this.clearKeys();
             modal.style.display = 'none';
             if (overlay) overlay.style.display = 'none';
+            if (inputCustom) inputCustom.blur();
         };
+
+        if (inputCustom) {
+            inputCustom.addEventListener('focus', () => this.clearKeys());
+        }
 
         if (btnSelect) btnSelect.addEventListener('click', openModal);
         if (btnClose) btnClose.addEventListener('click', closeModal);
