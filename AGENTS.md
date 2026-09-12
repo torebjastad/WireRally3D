@@ -92,6 +92,14 @@ Kvar iterasjon i prosjektet er basert på eksplisitte instruksjonar frå brukare
       3. **Multi-touch Samtidigheit (Dra-styring + Gass)**: Løyste problemet der gasspedal overstyrte eller avbraut mus/touch-dra-styring på lerretet. Knytte lerretsporinga til dedikert `mouseSteer.touchId` via `changedTouches`, slik at tommelen på gasspedalen og tommelen som dreg på lerretet opererer 100 % uavhengig.
       4. **Autonom Mobil-Emulering og Visuell Sjekk (`tools/test_mobile_gui.js`)**: Bygde eit autonomt inspeksjonsverktøy basert på Microsoft Edge og Chrome DevTools Protocol (CDP) WebSocket. Verktøyet emulerer eksakte mobilmål med `Emulation.setDeviceMetricsOverride`, validerer at ingen DOM-element har `right > innerWidth`, og tek presise skjermbilete (`mobile_portrait.png`, `mobile_landscape.png`, `mobile_menu.png`, `mobile_wheel.png`).
       5. **Automatisert Verifikasjon**: Utvida `tools/run_all_tests.py` med `tests/test_multitouch.js` som verifiserer fleirberøringstilstandar og isolasjon ved 100 % suksess.
+20. **Garantert Alltid Siste Versjon ved Reload (Null Caching):**
+    - *Brukar:* "Ensure that always the newest version is loaded on refresh so that it is not stuck on a cached version"
+    - *Løysing:* Etablerte eit 4-lags anti-caching system som gjer det umogleg for nettlesarar (særleg mobilnettlesarar som Safari og Chrome Mobile) å sitte fast på ei gamal cachet utgåve:
+      1. **Dedikert No-Cache Dev Server (`tools/dev_server.py`):** Serverar alle filer med `Cache-Control: no-store, no-cache, must-revalidate, max-age=0`, `Pragma: no-cache` og `Expires: 0`. Strippar `If-Modified-Since` og `If-None-Match` slik at 304 Not Modified aldri vert sendt.
+      2. **HTML Anti-Cache Meta Tags (`index.html`):** Meta-tags i `<head>` instruerer nettlesaren om å aldri lagre HTML-dokumentet.
+      3. **Dynamisk Tidsstempel Cache-Buster (`window._CACHE_VERSION = Date.now()`):** Både `css/style.css` og alle dei 13 spele-skripta vert lasta inn dynamisk med `?v=<timestamp>` (`s.async = false` for garantert sekvensiell køyring). Sidan tidsstempelet er unikt for kvar einaste sideoppfrisking, vil nettlesaren aldri gjenbruke tidlegare henta JavaScript eller CSS.
+      4. **Service Worker Opprydding & ReadyState Vern:** Avregistrerer automatisk eventuelle uønska service workers på localhost, og `js/main.js` sjekkar `document.readyState` slik at initialiseringa skjer uavbrotne sjølv om skripta kjem inn etter DOMContentLoaded.
+      5. **Automatisert Test:** La til `tests/test_cache_busting.js` i hovudtestsløyfa (`tools/run_all_tests.py`), og la inn ein diskré statusindikator i cyber-menyen (`⚡ ALLTID SISTE VERSJON (CACHE-BUST AKTIV)`).
 
 ---
 

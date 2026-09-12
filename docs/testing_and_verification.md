@@ -43,11 +43,15 @@ Køyrer 13 grundige einings- og integrasjonstestar:
 - Verifiserer at spelaren kan gassa eller bremsa samstundes som dei dreg med tommelen på 3D-lerretet for å styre.
 - Testar at frigjeving av gasspedal ikkje avbryt eller nullstiller styringa, og at urelaterte berøringar på skjermen ignorerast.
 
-### Steg 5: 3D Scenerender & Visuelt Artefakt (`python tools/render_3d_preview.py`)
+### Steg 5: Strikt Anti-Caching og Ferskhetsverifikasjon (`node tests/test_cache_busting.js`)
+- Verifiserer at `tools/dev_server.py` returnerer strenge `Cache-Control: no-store, no-cache, must-revalidate, max-age=0` og `Pragma: no-cache` på alle filer.
+- Sjekkar at `index.html` inneheld anti-caching meta-taggar og at alle `.js`- og `.css`-ressursar vert lasta inn med unike tidsstempeltokens (`?v=<timestamp>`).
+
+### Steg 6: 3D Scenerender & Visuelt Artefakt (`python tools/render_3d_preview.py`)
 - Teiknar eit reelt 3D wireframe-bilete av terrenget, vegane og bilen sett frå kameraet.
 - Lagrar eit PNG-bilete som visuelt bevis på at grafikken og linjene er feilfrie.
 
-### Steg 6: Autonom Mobil GUI & CDP Layout-inspeksjon (`node tools/test_mobile_gui.js`)
+### Steg 7: Autonom Mobil GUI & CDP Layout-inspeksjon (`node tools/test_mobile_gui.js`)
 - Spånar hovudlause Microsoft Edge via Chrome DevTools Protocol (CDP) med ekte enhetsmetrikkar (`Emulation.setDeviceMetricsOverride`).
 - Måler nøyaktige `getBoundingClientRect()` for alle HUD-element i portrait (390×844) og landscape (844×390).
 - Verifiserer automatisk at ingen element fell utanfor skjermkanten (`overflowRight <= 0`).

@@ -1058,6 +1058,19 @@ body.force-touch-controls .touch-controls {
     padding-top: 10px;
 }
 
+.menu-version-badge {
+    margin-top: 8px;
+    font-size: 9px;
+    color: #00ffcc;
+    letter-spacing: 1px;
+    text-align: center;
+    background: rgba(0, 255, 204, 0.08);
+    border: 1px solid rgba(0, 255, 204, 0.3);
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-family: 'Share Tech Mono', monospace;
+}
+
 /* =========================================
    RESPONSIVE HUD FOR MOBILE & SMALL SCREENS
    ========================================= */

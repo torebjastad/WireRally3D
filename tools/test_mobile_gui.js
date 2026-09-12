@@ -88,8 +88,19 @@ async function run() {
     // Reload or set viewport so media queries re-evaluate for exact mobile dimensions
     await send('Page.reload');
 
-    // Wait 1.5 second for game loop to start
-    await new Promise(r => setTimeout(r, 1500));
+    // Wait for game loop to fully start
+    for (let i = 0; i < 30; i++) {
+        const check = await send('Runtime.evaluate', {
+            expression: '!!window.rallyGame',
+            returnByValue: true
+        });
+        if (check.result && check.result.value === true) {
+            console.log(`Game ready after ${(i + 1) * 200}ms!`);
+            break;
+        }
+        await new Promise(r => setTimeout(r, 200));
+    }
+    await new Promise(r => setTimeout(r, 500));
 
     // Inspect layout
     const evalResult = await send('Runtime.evaluate', {

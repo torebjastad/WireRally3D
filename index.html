@@ -3,8 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Strict Anti-Caching Headers for Instant Refresh -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Årølia Rally 3D - Wireframe Edition</title>
-    <link rel="stylesheet" href="css/style.css">
+    <script>
+        // Automatic timestamp cache-buster for stylesheet & scripts
+        window._CACHE_VERSION = Date.now();
+        document.write('<link rel="stylesheet" href="css/style.css?v=' + window._CACHE_VERSION + '">');
+        
+        // Clean up any stale service workers that could intercept requests
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(regs => {
+                for (let r of regs) r.unregister();
+            }).catch(() => {});
+        }
+    </script>
 </head>
 <body>
     <div id="gameContainer">
@@ -91,6 +106,9 @@
                     </div>
                     <div class="menu-controls-guide">
                         <strong>KONTROLLAR:</strong> W / S = Gass / Brems • A / D eller Mus-drag = Sving • SPACE = Drift • R = Nullstill • T = Start på nytt
+                    </div>
+                    <div class="menu-version-badge" id="menuVersionBadge">
+                        ⚡ ALLTID SISTE VERSJON (CACHE-BUST AKTIV)
                     </div>
                 </div>
             </div>
@@ -223,19 +241,34 @@
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="js/data/bundle.js"></script>
-    <script src="js/data/presets.js"></script>
-    <script src="js/engine/math3d.js"></script>
-    <script src="js/engine/terrain.js"></script>
-    <script src="js/engine/physics.js"></script>
-    <script src="js/engine/wireframeRenderer.js"></script>
-    <script src="js/engine/audio.js"></script>
-    <script src="js/engine/dynamicMapLoader.js"></script>
-    <script src="js/game/car.js"></script>
-    <script src="js/game/track.js"></script>
-    <script src="js/game/minimap.js"></script>
-    <script src="js/game/gameLoop.js"></script>
-    <script src="js/main.js"></script>
+    <!-- Dynamic Anti-Cache Script Loader: Always loads latest version on refresh -->
+    <script>
+    (function() {
+        const v = window._CACHE_VERSION || Date.now();
+        console.log("Loading Årølia Rally 3D assets with cache-buster token:", v);
+        const scripts = [
+            'js/data/bundle.js',
+            'js/data/presets.js',
+            'js/engine/math3d.js',
+            'js/engine/terrain.js',
+            'js/engine/physics.js',
+            'js/engine/wireframeRenderer.js',
+            'js/engine/audio.js',
+            'js/engine/dynamicMapLoader.js',
+            'js/game/car.js',
+            'js/game/track.js',
+            'js/game/minimap.js',
+            'js/game/gameLoop.js',
+            'js/main.js'
+        ];
+
+        scripts.forEach(src => {
+            const s = document.createElement('script');
+            s.src = src + '?v=' + v;
+            s.async = false; // Strictly preserves execution order across all browsers
+            document.body.appendChild(s);
+        });
+    })();
+    </script>
 </body>
 </html>

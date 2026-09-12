@@ -38,6 +38,7 @@ def main():
         ("Math3D Matrix & Projection Unit Test", ["node", "tests/test_math3d.js"]),
         ("Full Game Engine Headless Integration Test", ["node", "tests/test_game_headless.js"]),
         ("Multi-touch Concurrency & Input State Test", ["node", "tests/test_multitouch.js"]),
+        ("Strict Cache-Busting & Freshness Verification", ["node", "tests/test_cache_busting.js"]),
         ("3D Perspective Render & Visual Artifact Generator", [sys.executable, "tools/render_3d_preview.py"]),
     ]
     

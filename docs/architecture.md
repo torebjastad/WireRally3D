@@ -6,8 +6,8 @@
 ### Kjernefilosofi:
 - **Null eksterne køyretidsavhengnader (Zero runtime dependencies):**
   Spelet krev verken Three.js, Babylon.js, WebGL eller tunge rammeverk. All 3D-matematikk (vektorar, 4x4 matriser, kameraprojeksjon, linjeklipping) og teikning er skrive frå botnen i rein standard Vanilla JavaScript og HTML5 Canvas 2D Context.
-- **Rett fram i alle nettlesarar:**
-  Kan køyrast direkte ved å opne `index.html` eller via ein enkel statisk HTTP-server (`python -m http.server 8080`).
+- **Rett fram i alle nettlesarar (Alltid oppdatert utan caching):**
+  Kan køyrast direkte ved å opne `index.html` eller via den inkluderte no-cache dev-serveren (`python tools/dev_server.py 8080`). Spelet nyttar eit 4-lags anti-caching system med dynamiske tidsstemplar og HTTP-headers som garanterer at nyaste versjon alltid vert henta ved oppfrisking.
 - **Autonom to-spora arkitektur (Web + Headless verifikasjon):**
   Kvar komponent i spelet har ein motpart som kan testast og validerast utan nettlesar via Node.js og Python-testsuiten.
 
@@ -54,6 +54,8 @@
 │   ├── export_bundle.py            # Pakkar JSON-data inn i js/data/bundle.js
 │   ├── simulate_headless.py        # Python-implementasjon av bilfysikk og autonom AI-sjåfør
 │   ├── render_3d_preview.py        # Genererer statiske 3D-førehandsvisningsbilete
+│   ├── dev_server.py               # No-cache HTTP server for lynrask lokal køyring utan caching
+│   ├── test_mobile_gui.js          # Edge CDP inspeksjons- og layout-verktøy for mobil
 │   └── run_all_tests.py            # Hovudskript for heile den autonome testsløyfa
 │
 ├── tests/
@@ -62,7 +64,9 @@
 │   ├── test_rally_course.py        # pytest: AI-sjåfør som fullfører heile etappen
 │   ├── test_terrain_elevation.py   # pytest: DTM1 terrenghøgder, hellingar og kontinuitet
 │   ├── test_math3d.js              # Node.js: 3D-matrise- og projeksjonstestar
-│   └── test_game_headless.js       # Node.js: 300-framers full headless spelintegrasjonstest
+│   ├── test_game_headless.js       # Node.js: 300-framers full headless spelintegrasjonstest
+│   ├── test_multitouch.js          # Node.js: Multi-touch samtidigheit og isolasjon
+│   └── test_cache_busting.js       # Node.js: Verifikasjon av no-cache headers og dynamiske tokens
 │
 └── docs/                           # Detaljerte faglege dokumentasjonar
     ├── architecture.md             # Dette dokumentet
