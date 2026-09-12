@@ -68,23 +68,42 @@
                 <div class="rpm-label"><span id="valRpm">900</span> RPM</div>
             </div>
 
-            <!-- Toolbar & Controls Bottom Left -->
-            <div class="controls-panel">
-                <div class="action-buttons">
-                    <button class="btn-hud" id="btnSelectStage">🗺️ VEL KART</button>
-                    <button class="btn-hud" id="btnReset">🔄 RESET BIL (R)</button>
-                    <button class="btn-hud" id="btnCam">🎥 KAMERA (C)</button>
-                    <button class="btn-hud" id="btnMute">🔊 LYD (M)</button>
-                    <button class="btn-hud" id="btnTouchMode">🎮 MODUS: KNAPPAR</button>
-                    <button class="btn-hud" id="btnFullscreen">⛶ FULLSKJERM</button>
+            <!-- Quick Menu Toggle (Top Right under minimap or beside it) -->
+            <div class="top-menu-bar">
+                <button class="btn-hud btn-menu-toggle" id="btnMenuToggle">⚙️ MENY</button>
+            </div>
+
+            <!-- Sleek Cyber Game Menu Drawer -->
+            <div id="quickMenuDrawer" class="quick-menu-drawer" style="display: none;">
+                <div class="menu-drawer-backdrop" id="menuDrawerBackdrop"></div>
+                <div class="menu-drawer-card">
+                    <div class="menu-drawer-header">
+                        <span class="menu-drawer-title">⚙️ RALLYMENY & KONTROLLAR</span>
+                        <button class="btn-close-menu" id="btnCloseMenu">✕</button>
+                    </div>
+                    <div class="menu-items-grid">
+                        <button class="btn-hud btn-menu-action" id="btnSelectStage">🗺️ VEL KART</button>
+                        <button class="btn-hud btn-menu-action" id="btnReset">🔄 RESET BIL (R)</button>
+                        <button class="btn-hud btn-menu-action" id="btnCam">🎥 KAMERA (C)</button>
+                        <button class="btn-hud btn-menu-action" id="btnMute">🔊 LYD (M)</button>
+                        <button class="btn-hud btn-menu-action" id="btnTouchMode">🎮 MODUS: KNAPPAR</button>
+                        <button class="btn-hud btn-menu-action" id="btnFullscreen">⛶ FULLSKJERM</button>
+                    </div>
+                    <div class="menu-controls-guide">
+                        <strong>KONTROLLAR:</strong> W / S = Gass / Brems • A / D eller Mus-drag = Sving • SPACE = Drift • R = Nullstill • T = Start på nytt
+                    </div>
                 </div>
+            </div>
+
+            <!-- Desktop Controls Panel (Bottom Left on widescreen only) -->
+            <div class="controls-panel desktop-only">
                 <div class="help-text">
                     <strong>KONTROLLAR:</strong><br>
                     • <b>Styring:</b> Klikk & Dra Mus (V/H) eller A / D / Piltastar<br>
                     • <b>Gass / Brems:</b> W / S eller Pil Opp / Ned<br>
                     • <b>Brekk-sladd (Drift):</b> SPACE (Mellomrom)<br>
                     • <b>Kamera:</b> C (Heli Bakfra [Standard] / Chase / Panser / Heli Topp)<br>
-                    • <b>Velg Kart / Område:</b> Klikk "🗺️ VEL KART" knappen<br>
+                    • <b>Velg Kart / Område:</b> Klikk "🗺️ VEL KART" i menyen<br>
                     • <b>Start på nytt:</b> T
                 </div>
             </div>

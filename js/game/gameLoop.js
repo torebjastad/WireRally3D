@@ -241,6 +241,7 @@ class GameLoop {
         const onDragEnd = () => {
             if (!this.mouseSteer.isDragging) return;
             this.mouseSteer.isDragging = false;
+            this.mouseSteer.touchId = null;
             this.mouseSteer.steerValue = 0.0;
             this.updateMouseSteerUI(false);
         };
@@ -248,7 +249,7 @@ class GameLoop {
         window.addEventListener('mousedown', (e) => {
             if (e.button !== 0) return; // Left mouse button only
             // Don't intercept button clicks on HUD elements or modal dialogs/inputs
-            if (e.target && e.target.closest && e.target.closest('.controls-panel, .minimap-wrapper, .touch-controls, .stage-modal, button, input, textarea')) return;
+            if (e.target && e.target.closest && e.target.closest('.controls-panel, .minimap-wrapper, .touch-controls, .stage-modal, .quick-menu-drawer, .top-menu-bar, button, input, textarea')) return;
             onDragStart(e.clientX, e.clientY);
         });
 
@@ -260,26 +261,44 @@ class GameLoop {
             if (e.button === 0) onDragEnd();
         });
 
-        // Touch drag steering on viewport
+        // Touch drag steering on viewport with independent touch ID tracking
         const canvas = document.getElementById('renderCanvas');
         if (canvas) {
             canvas.addEventListener('touchstart', (e) => {
-                if (e.touches.length > 0) {
-                    const t = e.touches[0];
+                if (this.mouseSteer.touchId !== null) return;
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const t = e.changedTouches[i];
+                    this.mouseSteer.touchId = t.identifier;
                     onDragStart(t.clientX, t.clientY);
+                    break;
                 }
             }, { passive: true });
 
-            canvas.addEventListener('touchmove', (e) => {
-                if (this.mouseSteer.isDragging && e.touches.length > 0) {
-                    const t = e.touches[0];
-                    onDragMove(t.clientX, t.clientY);
+            window.addEventListener('touchmove', (e) => {
+                if (!this.mouseSteer.isDragging || this.mouseSteer.touchId === null) return;
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const t = e.changedTouches[i];
+                    if (t.identifier === this.mouseSteer.touchId) {
+                        onDragMove(t.clientX, t.clientY);
+                        break;
+                    }
                 }
             }, { passive: true });
 
-            canvas.addEventListener('touchend', () => {
-                onDragEnd();
-            });
+            const onTouchRelease = (e) => {
+                if (this.mouseSteer.touchId === null) return;
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const t = e.changedTouches[i];
+                    if (t.identifier === this.mouseSteer.touchId) {
+                        this.mouseSteer.touchId = null;
+                        onDragEnd();
+                        break;
+                    }
+                }
+            };
+
+            window.addEventListener('touchend', onTouchRelease, { passive: true });
+            window.addEventListener('touchcancel', onTouchRelease, { passive: true });
         }
     }
 
@@ -525,6 +544,40 @@ class GameLoop {
                 const notice = document.getElementById('portraitNotice');
                 if (notice) notice.style.display = 'none';
             });
+        }
+
+        // 7. Quick Menu Drawer Toggle
+        const btnMenuToggle = document.getElementById('btnMenuToggle');
+        const quickMenu = document.getElementById('quickMenuDrawer');
+        const btnCloseMenu = document.getElementById('btnCloseMenu');
+        const menuBackdrop = document.getElementById('menuDrawerBackdrop');
+
+        const openMenu = () => {
+            this.clearKeys();
+            if (quickMenu) quickMenu.style.display = 'flex';
+        };
+
+        const closeMenu = () => {
+            if (quickMenu) quickMenu.style.display = 'none';
+        };
+
+        if (btnMenuToggle) {
+            btnMenuToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (quickMenu && quickMenu.style.display !== 'none') {
+                    closeMenu();
+                } else {
+                    openMenu();
+                }
+            });
+        }
+
+        if (btnCloseMenu) btnCloseMenu.addEventListener('click', closeMenu);
+        if (menuBackdrop) menuBackdrop.addEventListener('click', closeMenu);
+
+        const btnSelectStage = document.getElementById('btnSelectStage');
+        if (btnSelectStage) {
+            btnSelectStage.addEventListener('click', closeMenu);
         }
 
         // Camera, Reset, and Mute buttons

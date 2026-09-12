@@ -939,18 +939,143 @@ body.force-touch-controls .touch-controls {
 }
 
 /* =========================================
+   TOP QUICK MENU DRAWER (CLEAN UI)
+   ========================================= */
+
+.top-menu-bar {
+    position: absolute;
+    top: 16px;
+    right: 312px;
+    z-index: 1500;
+    pointer-events: auto;
+}
+
+.btn-menu-toggle {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 7px 12px;
+    border-color: #00ffcc;
+    background: rgba(5, 16, 28, 0.9);
+    box-shadow: 0 0 12px rgba(0, 255, 204, 0.3);
+}
+
+.quick-menu-drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 3500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+}
+
+.menu-drawer-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(4, 8, 16, 0.88);
+    backdrop-filter: blur(8px);
+}
+
+.menu-drawer-card {
+    position: relative;
+    background: #081220;
+    border: 1.5px solid #00ffcc;
+    border-radius: 8px;
+    padding: 20px 24px;
+    max-width: 440px;
+    width: 90%;
+    box-shadow: 0 0 35px rgba(0, 255, 204, 0.4), inset 0 0 15px rgba(0, 255, 204, 0.08);
+    color: #ffffff;
+    z-index: 3501;
+}
+
+.menu-drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(0, 255, 204, 0.3);
+}
+
+.menu-drawer-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 1px;
+    text-shadow: 0 0 10px #00ffcc;
+}
+
+.btn-close-menu {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: #ffffff;
+    font-size: 16px;
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-close-menu:hover {
+    border-color: #ff0055;
+    color: #ff0055;
+    background: rgba(255, 0, 85, 0.15);
+}
+
+.menu-items-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.btn-menu-action {
+    width: 100%;
+    padding: 10px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+}
+
+.menu-controls-guide {
+    font-size: 11px;
+    color: #88c0b5;
+    line-height: 1.4;
+    border-top: 1px dashed rgba(0, 255, 204, 0.25);
+    padding-top: 10px;
+}
+
+/* =========================================
    RESPONSIVE HUD FOR MOBILE & SMALL SCREENS
    ========================================= */
 
 @media (max-width: 950px), (max-height: 550px) {
+    /* Hide desktop controls panel on small screens - keep screen clean! */
+    .desktop-only {
+        display: none !important;
+    }
+
     /* Top Header */
     .top-header {
         top: 8px;
-        left: 12px;
+        left: 10px;
         gap: 0;
     }
     .game-title {
-        font-size: 15px;
+        font-size: 14px;
         letter-spacing: 1px;
     }
     .game-subtitle {
@@ -962,8 +1087,8 @@ body.force-touch-controls .touch-controls {
         top: 8px;
     }
     #bannerNotice {
-        font-size: 11px;
-        padding: 4px 12px;
+        font-size: 10px;
+        padding: 4px 10px;
     }
 
     /* Minimap (Compact) */
@@ -973,115 +1098,199 @@ body.force-touch-controls .touch-controls {
         padding: 2px;
     }
     #minimapCanvas {
-        width: 120px;
-        height: 68px;
+        width: 110px;
+        height: 62px;
     }
     .minimap-label {
-        font-size: 9px;
+        font-size: 8px;
         padding-top: 1px;
+    }
+
+    /* Top Quick Menu Button */
+    .top-menu-bar {
+        top: 8px;
+        right: 126px;
+    }
+    .btn-menu-toggle {
+        font-size: 10px;
+        padding: 5px 8px;
     }
 
     /* Timing HUD */
     .timing-panel {
-        top: 32px;
-        left: 12px;
-        padding: 4px 8px;
-        min-width: 120px;
+        top: 30px;
+        left: 10px;
+        padding: 3px 6px;
+        min-width: 110px;
         gap: 2px;
     }
     .hud-row {
-        font-size: 10px;
-    }
-
-    /* Gauge Cluster: Elevated so it never collides with pedals */
-    .gauge-cluster {
-        bottom: 124px;
-        right: 14px;
-        padding: 6px 12px;
-        border-radius: 6px;
-    }
-    #valSpeed {
-        font-size: 32px;
-    }
-    .speed-unit {
-        font-size: 11px;
-    }
-    .gear-display {
-        font-size: 13px;
-        margin-top: 2px;
-    }
-    .rpm-bar-container {
-        width: 90px;
-        height: 6px;
-        margin-top: 4px;
-    }
-    .rpm-label {
         font-size: 9px;
-        margin-top: 2px;
-    }
-
-    /* Action Toolbar: Repositioned away from left-thumb steering */
-    .controls-panel {
-        top: 8px;
-        left: auto;
-        right: 140px;
-        bottom: auto;
-        gap: 4px;
-    }
-    .action-buttons {
-        gap: 4px;
-        flex-wrap: wrap;
-        max-width: 380px;
-        justify-content: flex-end;
-    }
-    .btn-hud {
-        font-size: 10px;
-        padding: 4px 8px;
     }
 
     /* Modal dialog compact on mobile */
     .stage-modal-card {
-        padding: 14px 16px;
+        padding: 12px 14px;
         max-height: 94vh;
         width: 95%;
     }
     .modal-title {
-        font-size: 15px;
+        font-size: 14px;
     }
     .modal-subtitle {
-        font-size: 11px;
-        margin-bottom: 10px;
-    }
-    .preset-grid {
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 8px;
-        margin-bottom: 14px;
-    }
-    .preset-card {
-        padding: 8px;
-    }
-    .preset-name {
-        font-size: 12px;
-    }
-    .preset-desc {
         font-size: 10px;
         margin-bottom: 8px;
     }
+    .preset-grid {
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 6px;
+        margin-bottom: 12px;
+    }
+    .preset-card {
+        padding: 6px;
+    }
+    .preset-name {
+        font-size: 11px;
+    }
+    .preset-desc {
+        font-size: 9px;
+        margin-bottom: 6px;
+    }
     .btn-load-preset {
-        font-size: 10px;
-        padding: 6px 8px;
+        font-size: 9px;
+        padding: 5px 6px;
     }
     .custom-search-box {
-        padding: 10px;
+        padding: 8px;
     }
     #inputCustomStage {
-        padding: 6px 10px;
-        font-size: 11px;
+        padding: 6px 8px;
+        font-size: 10px;
     }
     .btn-search {
-        padding: 6px 12px;
-        font-size: 11px;
+        padding: 6px 10px;
+        font-size: 10px;
     }
 }
+
+/* Specific adjustments for PORTRAIT MODE */
+@media (orientation: portrait) {
+    /* Stage banner below top header so it never collides with Meny or Title */
+    .stage-banner-box {
+        top: 50px;
+    }
+
+    .touch-controls {
+        bottom: 8px;
+        padding: 0 8px 8px 8px;
+    }
+    .touch-cluster-left {
+        gap: 8px;
+    }
+    .touch-steer-buttons {
+        gap: 8px;
+    }
+    .btn-steer {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+    .touch-steer-wheel-zone {
+        width: 140px;
+        height: 54px;
+    }
+    .wheel-track {
+        width: 105px;
+    }
+    .wheel-knob {
+        width: 36px;
+        height: 36px;
+        margin-left: -18px;
+        margin-top: -18px;
+    }
+    .touch-steer-gyro-zone {
+        width: 130px;
+        height: 54px;
+    }
+
+    /* Pedals in portrait: fit comfortably */
+    .touch-cluster-right {
+        gap: 6px;
+    }
+    .btn-touch-brake {
+        width: 44px;
+        height: 44px;
+        font-size: 9px;
+        margin-bottom: 2px;
+    }
+    .btn-pedal-down {
+        width: 46px;
+        height: 58px;
+    }
+    .btn-pedal-up {
+        width: 52px;
+        height: 74px;
+    }
+    .pedal-icon {
+        font-size: 18px;
+    }
+    .pedal-lbl {
+        font-size: 8px;
+    }
+
+    /* Gauge cluster in portrait */
+    .gauge-cluster {
+        bottom: 96px;
+        right: 8px;
+        padding: 4px 8px;
+    }
+    #valSpeed {
+        font-size: 26px;
+    }
+    .rpm-bar-container {
+        width: 70px;
+        height: 4px;
+    }
+}
+
+/* Specific adjustments for LANDSCAPE MODE on mobile */
+@media (orientation: landscape) and (max-height: 550px) {
+    .touch-controls {
+        bottom: 8px;
+        padding: 0 max(16px, env(safe-area-inset-right, 16px)) 8px max(16px, env(safe-area-inset-left, 16px));
+    }
+    .btn-steer {
+        width: 60px;
+        height: 60px;
+        font-size: 24px;
+    }
+    .touch-steer-wheel-zone {
+        width: 160px;
+        height: 60px;
+    }
+    .touch-steer-gyro-zone {
+        width: 150px;
+        height: 60px;
+    }
+    .btn-touch-brake {
+        width: 52px;
+        height: 52px;
+        font-size: 10px;
+    }
+    .btn-pedal-down {
+        width: 54px;
+        height: 66px;
+    }
+    .btn-pedal-up {
+        width: 60px;
+        height: 84px;
+    }
+    .gauge-cluster {
+        bottom: 106px;
+        right: 14px;
+        padding: 6px 10px;
+    }
+}
+
 
 

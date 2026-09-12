@@ -39,9 +39,19 @@ Køyrer 13 grundige einings- og integrasjonstestar:
 - Simulerer **300 fulle fysikk- og rendering-frames** (5 sekund med aktiv køyring).
 - Veksler gjennom alle 4 kameramodusar (`heli_chase`, `chase`, `hood`, `heli_top`) og verifiserer at ingen koordinatar eller berekningar vert `NaN`.
 
-### Steg 4: 3D Scenerender & Visuelt Artefakt (`python tools/render_3d_preview.py`)
+### Steg 4: Multi-touch Samtidigheitstest (`node tests/test_multitouch.js`)
+- Verifiserer at spelaren kan gassa eller bremsa samstundes som dei dreg med tommelen på 3D-lerretet for å styre.
+- Testar at frigjeving av gasspedal ikkje avbryt eller nullstiller styringa, og at urelaterte berøringar på skjermen ignorerast.
+
+### Steg 5: 3D Scenerender & Visuelt Artefakt (`python tools/render_3d_preview.py`)
 - Teiknar eit reelt 3D wireframe-bilete av terrenget, vegane og bilen sett frå kameraet.
 - Lagrar eit PNG-bilete som visuelt bevis på at grafikken og linjene er feilfrie.
+
+### Steg 6: Autonom Mobil GUI & CDP Layout-inspeksjon (`node tools/test_mobile_gui.js`)
+- Spånar hovudlause Microsoft Edge via Chrome DevTools Protocol (CDP) med ekte enhetsmetrikkar (`Emulation.setDeviceMetricsOverride`).
+- Måler nøyaktige `getBoundingClientRect()` for alle HUD-element i portrait (390×844) og landscape (844×390).
+- Verifiserer automatisk at ingen element fell utanfor skjermkanten (`overflowRight <= 0`).
+- Tek verifiserte skjermbilete av kontrollerar, samanleggbar cyber-meny og styrehjul.
 
 ---
 

@@ -79,8 +79,11 @@ Spelet har full integrert støtte for smarttelefonar og nettbrett med tre valfri
 4. **Web Audio Opplåsing på Mobil:**
    `AudioContext` vert automatisk låst opp (`init()` og `resume()`) ved første berøring (`touchstart`) på skjermen.
 
-5. **Responsivt Cyber-HUD & Fullskjerm:**
-   - Eige `⛶ FULLSKJERM`-val som skjuler adressefeltet for ei rein app-oppleving.
-   - Kompakt minikart ($120 \times 68\text{ px}$) og speedometer heva over pedalområdet.
-   - Orienteringsoverlay som rår spelaren til å nytte liggande format (landscape).
+5. **Responsivt Cyber-HUD, Meny-skuff & Fullskjerm:**
+   - **Samanleggbar Cyber-Meny (`⚙️ MENY`):** På mobil og små skjermar vert alle sekundære handlingar (`🗺️ VEL KART`, `🔄 RESET BIL`, `🎥 KAMERA`, `🔊 LYD`, `🎮 MODUS`, `⛶ FULLSKJERM`) gøymde bak ein diskré `⚙️ MENY`-knapp øvst til høgre ved sida av minikartet. Dette gjer at spelaren har 100 % uhindra sikt framover vegen.
+   - **Skjermgrenser i Portrait og Landscape:** Kontrollerane og pedalane er skalerte og polstra (`padding: 0 8px 8px 8px`) slik at ingen knappar hamnar utanfor skjermen, sjølv på smale telefonar (f.eks. iPhone 390×844).
+   - **Multi-Touch Lerret-styring:** Spelaren kan halde gasspedalen med høgre tommel og samstundes dra på 3D-lerretet med venstre tommel. Berøringane vert spora med uavhengige `touchId`-referansar slik at dei aldri kjem i konflikt.
+   - **Fullskjerm:** Eige `⛶ FULLSKJERM`-val som skjuler adressefeltet for ei rein app-oppleving.
+   - **Kompakt Minikart & Fartsmålar:** Minikart ($110 \times 62\text{ px}$) og speedometer heva rett over pedalområdet.
+   - **Orienteringsoverlay:** Rår spelaren til å nytte liggande format (landscape), men høgkant (portrait) er no 100 % støtta og tilpassa.
 
