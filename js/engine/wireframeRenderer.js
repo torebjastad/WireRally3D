@@ -22,12 +22,16 @@ class WireframeRenderer {
     }
 
     resize() {
-        const w = window.innerWidth;
-        const h = window.innerHeight;
+        const dpr = (typeof window !== 'undefined' && window.devicePixelRatio) ? Math.min(window.devicePixelRatio, 1.75) : 1.0;
+        const winW = (typeof window !== 'undefined' && window.innerWidth) ? window.innerWidth : 1280;
+        const winH = (typeof window !== 'undefined' && window.innerHeight) ? window.innerHeight : 720;
+        const w = Math.round(winW * dpr);
+        const h = Math.round(winH * dpr);
         if (this.canvas.width !== w || this.canvas.height !== h) {
             this.canvas.width = w;
             this.canvas.height = h;
         }
+        this.dpr = dpr;
     }
 
     setCamera(pos, target) {
@@ -126,7 +130,7 @@ class WireframeRenderer {
             const alpha = Math.max(0.12, 1.0 - (dist / maxDist) * 0.88);
             ctx.strokeStyle = color;
             ctx.globalAlpha = alpha;
-            ctx.lineWidth = Math.max(0.8, lineWidth * (1.0 - (dist / maxDist) * 0.4));
+            ctx.lineWidth = Math.max(0.8, lineWidth * (this.dpr || 1.0) * (1.0 - (dist / maxDist) * 0.4));
 
             ctx.beginPath();
             ctx.moveTo(res.s1.x, res.s1.y);

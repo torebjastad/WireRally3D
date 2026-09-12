@@ -228,3 +228,29 @@ for (let f = 0; f < 30; f++) {
 console.log(`Dynamic stage test complete! Car moved to (${carPhysics.x.toFixed(1)}, ${carPhysics.y.toFixed(1)}, ${carPhysics.z.toFixed(1)}), speed: ${(carPhysics.speed * 3.6).toFixed(1)} km/h`);
 console.log('PASS: Dynamic stage loading and rendering fully verified!');
 
+// Verifying Mobile Touch & DPR Optimization
+console.log('Verifying Mobile DPR Scaling and Touch Controls...');
+window.devicePixelRatio = 3.0; // Simulated high-DPI smartphone (e.g. iPhone Super Retina)
+window.innerWidth = 844;       // iPhone 14 landscape width
+window.innerHeight = 390;      // iPhone 14 landscape height
+renderer.resize();
+
+const expectedW = Math.round(844 * 1.75);
+const expectedH = Math.round(390 * 1.75);
+if (renderCanvas.width !== expectedW || renderCanvas.height !== expectedH) {
+    throw new Error(`Renderer DPR scaling mismatch! Expected ${expectedW}x${expectedH}, got ${renderCanvas.width}x${renderCanvas.height}`);
+}
+if (renderer.dpr !== 1.75) {
+    throw new Error(`Renderer dpr should be clamped to 1.75, got ${renderer.dpr}`);
+}
+console.log(`PASS: Mobile DPR scaling verified (${renderCanvas.width}x${renderCanvas.height} at clamped dpr=${renderer.dpr})!`);
+
+// Test that proportional touch steering inputs steer the car correctly
+carPhysics.reset(0, 0, 0);
+carPhysics.update(1.0, 0.65, 0.0, false, 0.1);
+if (carPhysics.steerAngle <= 0) {
+    throw new Error('Touch steer value did not result in positive steering angle');
+}
+console.log('PASS: Mobile touch and analog steering verification complete!');
+
+

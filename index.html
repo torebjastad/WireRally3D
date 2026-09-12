@@ -75,6 +75,8 @@
                     <button class="btn-hud" id="btnReset">🔄 RESET BIL (R)</button>
                     <button class="btn-hud" id="btnCam">🎥 KAMERA (C)</button>
                     <button class="btn-hud" id="btnMute">🔊 LYD (M)</button>
+                    <button class="btn-hud" id="btnTouchMode">🎮 MODUS: KNAPPAR</button>
+                    <button class="btn-hud" id="btnFullscreen">⛶ FULLSKJERM</button>
                 </div>
                 <div class="help-text">
                     <strong>KONTROLLAR:</strong><br>
@@ -87,16 +89,57 @@
                 </div>
             </div>
 
-            <!-- Touch Controls for Mobile / Tablets -->
-            <div class="touch-controls">
-                <div class="touch-cluster-left">
-                    <button class="btn-touch" id="btnTouchLeft">◀</button>
-                    <button class="btn-touch" id="btnTouchRight">▶</button>
+            <!-- Orientation Advisory Banner for Mobile Portrait -->
+            <div id="portraitNotice" class="portrait-notice" style="display: none;">
+                <div class="portrait-box">
+                    <div class="portrait-icon">🔄</div>
+                    <div class="portrait-text">VRI TELEFONEN TIL LIGGANDE FORMAT FOR BEST RALLYOPPLEVING</div>
+                    <button class="btn-hud btn-dismiss-portrait" id="btnDismissPortrait">FORTSETT LIKEVEL</button>
                 </div>
+            </div>
+
+            <!-- Touch Controls for Mobile / Tablets -->
+            <div class="touch-controls" id="touchControls">
+                <!-- Left Hand Steering Zone -->
+                <div class="touch-cluster-left">
+                    <!-- 1. Digital Buttons Mode (Default) -->
+                    <div class="touch-steer-buttons" id="steerButtonsGroup">
+                        <button class="btn-touch btn-steer" id="btnTouchLeft" aria-label="Sving Venstre">◀</button>
+                        <button class="btn-touch btn-steer" id="btnTouchRight" aria-label="Sving Høgre">▶</button>
+                    </div>
+
+                    <!-- 2. Analog Virtual Steering Wheel / Slider Mode -->
+                    <div class="touch-steer-wheel-zone" id="steerWheelGroup" style="display: none;">
+                        <div class="wheel-track">
+                            <div class="wheel-center-mark"></div>
+                            <div class="wheel-knob" id="wheelKnob">
+                                <span class="wheel-icon">✇</span>
+                            </div>
+                        </div>
+                        <div class="wheel-label" id="wheelLabel">DRA FOR Å STYRE</div>
+                    </div>
+
+                    <!-- 3. Gyro / Tilt Mode Indicator -->
+                    <div class="touch-steer-gyro-zone" id="steerGyroGroup" style="display: none;">
+                        <div class="gyro-horizon">
+                            <div class="gyro-car-needle" id="gyroNeedle">🏎️</div>
+                        </div>
+                        <div class="gyro-label" id="gyroLabel">TILTER: 0°</div>
+                        <button class="btn-touch-calib" id="btnCalibrateGyro">SULLSTILL (0°)</button>
+                    </div>
+                </div>
+
+                <!-- Right Hand Pedals Zone -->
                 <div class="touch-cluster-right">
-                    <button class="btn-touch btn-touch-brake" id="btnTouchBrake">DRIFT</button>
-                    <button class="btn-touch" id="btnTouchDown">▼</button>
-                    <button class="btn-touch" id="btnTouchUp">▲</button>
+                    <button class="btn-touch btn-touch-brake" id="btnTouchBrake" aria-label="Håndbrekk Drift">DRIFT</button>
+                    <button class="btn-touch btn-touch-pedal btn-pedal-down" id="btnTouchDown" aria-label="Brems / Revers">
+                        <span class="pedal-icon">▼</span>
+                        <span class="pedal-lbl">BREMS</span>
+                    </button>
+                    <button class="btn-touch btn-touch-pedal btn-pedal-up" id="btnTouchUp" aria-label="Gass">
+                        <span class="pedal-icon">▲</span>
+                        <span class="pedal-lbl">GASS</span>
+                    </button>
                 </div>
             </div>
         </div>

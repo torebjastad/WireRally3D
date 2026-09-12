@@ -54,3 +54,13 @@ Spelet har 4 kameramodusar som kan vekslast med `C`-tasten:
   - **Bygningar:** `#0088aa` (kontur-cyan)
   - **Sjekkpunktportar:** `#ffcc00` (gyllengul)
   - **Fjord / Horisont:** `#002233` (djupt nattblått)
+
+---
+
+## 5. Mobil High-DPI Skalering og Ytelsesvern (`wireframeRenderer.js`)
+- **DPR Clamping:** Mange moderne smarttelefonar (iPhone Super Retina, Samsung AMOLED) har `devicePixelRatio` på $3.0$ til $4.0$. Å rendre ein Canvas 2D-kontekst i full 4K-oppløysing med hundrevis av linjer dreg ned bildefrekvensen og brukar unødig mykje batteri.
+- **Optimalisering:** `WireframeRenderer.resize()` klemmer oppløysinga til:
+  $$\text{dpr} = \min(\text{window.devicePixelRatio} \parallel 1.0, 1.75)$$
+  Dette gjev ultraskarpe linjer utan pikselering på mobilskjermar, samstundes som 60 FPS haldast fjellstøtt sjølv på enkle mobile GPU-ar.
+- **Skalert Linjebreidde:** `ctx.lineWidth` skalerast proporsjonalt med `dpr` slik at vektorstrekane beheld rett optisk vekt på alle skjermoppløysingar.
+

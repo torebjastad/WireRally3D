@@ -28,24 +28,30 @@
    - Årølia er 100 % bevart som standard originalkart.
    - Køyr førehandspakka etappar: **Trollstigen (Fv63)**, **Lysebotn (Fv500)** og **Monaco GP Circuit**.
    - Søk opp eit **vilkårleg stadsnamn eller GPS-koordinatar** i heile verda for å hente vegar og høgder on-the-fly i 1000m × 1000m utsnitt.
-7. **Autonom Verifikasjonssyklus:**
+7. **Full Mobil- og Nettbrett-støtte (Multi-Touch & Gyro):**
+   - **3 Styremodusar:** `🕹️ KNAPPAR` (store retningspiler), `🎯 STYREHJUL` (trinnlaus analog berøringsslider) og `🔄 GYRO` (fysisk vri telefonen som eit ekte ratt).
+   - **Ergonomiske pedalar:** Høgre tommelsone med GASS (▲), BREMS (▼) og DRIFT-knapp for brekksladdar.
+   - **Multi-Touch:** Full uavhengig fingersporing slik at gass, brems og styring aldri blokkerer kvarandre.
+   - **Responsivt Cyber-HUD & Fullskjerm (`⛶`):** Automatisk orienteringshjelp, kompakt minikart og DPR-optimalisering for 60 FPS og lågt batteriforbruk på mobilskjermar.
+8. **Autonom Verifikasjonssyklus:**
    - Komplett testsuite (`python tools/run_all_tests.py`) med pytest (13 testar), Node.js matrise- og projeksjonstestar, headless spelsimulering (300 frames) og visuelt 3D scenerender.
 
 ---
 
 ## 🎮 Kontrollar (Controls)
 
-| Handling | Tastatur | Mus / Touch |
-| :--- | :--- | :--- |
-| **Styring (Analog)** | — | **Venstreklikk & Dra Mus** (V / H) |
-| **Styring (Digital)** | `A` / `D` eller `Pil Venstre` / `Høgre` | Touch-knappar på skjerm |
-| **Gass / Akselerasjon** | `W` eller `Pil Opp` | Touch ▲ |
-| **Brems / Rygge** | `S` eller `Pil Ned` | Touch ▼ |
-| **Brekk-sladd (Handbrake Drift)**| `Space` (Mellomrom) | Touch `DRIFT` |
-| **Skift Kameramodus** | `C` | Knapp `🎥 KAMERA` |
-| **Nullstill bil til veg** | `R` | Knapp `🔄 RESET BIL` |
-| **Start etappe på nytt** | `T` | — |
-| **Lyd Av / På (Mute)** | `M` | Knapp `🔊 LYD` |
+| Handling | Tastatur | Mus / Skjerm | Mobil / Nettbrett |
+| :--- | :--- | :--- | :--- |
+| **Styring (Valfri)** | `A` / `D` / Piltastar | Klikk & Dra Mus (V/H) | **Knappar**, **Styrehjul** eller **Gyro/Tilt** |
+| **Gass / Akselerasjon** | `W` eller `Pil Opp` | — | Pedal **▲ GASS** |
+| **Brems / Rygge** | `S` eller `Pil Ned` | — | Pedal **▼ BREMS** |
+| **Brekk-sladd (Drift)**| `Space` (Mellomrom) | — | Knapp **DRIFT** (Neon rosa) |
+| **Bytt Styremodus** | — | — | Knapp `🎮 MODUS` (Knappar/Hjul/Gyro) |
+| **Fullskjerm** | — | — | Knapp `⛶ FULLSKJERM` |
+| **Skift Kameramodus** | `C` | Knapp `🎥 KAMERA` | Knapp `🎥 KAMERA` |
+| **Nullstill bil til veg** | `R` | Knapp `🔄 RESET BIL` | Knapp `🔄 RESET BIL` |
+| **Start etappe på nytt** | `T` | — | — |
+| **Lyd Av / På (Mute)** | `M` | Knapp `🔊 LYD` | Knapp `🔊 LYD` |
 
 ---
 

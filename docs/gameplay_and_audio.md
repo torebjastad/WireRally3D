@@ -55,4 +55,32 @@ Spelet nyttar **Web Audio API** utan eksterne lydfiler:
 - **Dekkskrik og Sladdelyd:**
   - Kvit støy generert gjennom eit resonerande bandpassfilter (`BiquadFilterNode`).
   - Gain vert trigga proporsjonalt med bilens sideslip (`driftSlip`) ved brekksladd og hard bremsing.
-- **Lydkontroll:** Kan slåast av/på med `M`-tasten.
+- **Lydkontroll:** Kan slåast av/på med `M`-tasten eller `🔊 LYD`-knappen i HUD.
+
+---
+
+## 5. Mobil- og Nettbrett-støtte (`gameLoop.js` & `style.css`)
+
+Spelet har full integrert støtte for smarttelefonar og nettbrett med tre valfrie styremodusar og multi-touch:
+
+1. **Tre Styremodusar:**
+   - **`🕹️ KNAPPAR` (Standard):** Store berøringsknappar for venstre tommel (`◀` og `▶`).
+   - **`🎯 STYREHJUL`:** Trinnlaus analog berøringsflate. Når tommelen dregast mot høgre eller venstre, vert styrevinkelen kalkulert proporsjonalt ($0 - 100\%$) med ikkje-lineær kurve for presis linjehaldning.
+   - **`🔄 GYRO`:** Fysisk vri/tilting av telefonen som eit ratt (`DeviceOrientationEvent` gamma/beta). Støttar iOS 13+ med løyve-førespurnad og har eigen nullstillingsknapp (`btnCalibrateGyro`).
+
+2. **Ergonomiske Pedalar (Høgre Tommelsone):**
+   - **▲ GASS:** Vertikalt langstrakt gasspedal tilpassa naturleg tommelkvile.
+   - **▼ BREMS:** Brei bremse- og reversblokk.
+   - **DRIFT:** Neon-rosa knapp for handbrekksladd i krappe svingar.
+
+3. **Multi-Touch Sporing:**
+   Kvar finger vert spora uavhengig via `Touch.identifier`, slik at gasspådrag, styring og brekksladd kan utførast samstundes utan at hendingane blokkerer kvarandre.
+
+4. **Web Audio Opplåsing på Mobil:**
+   `AudioContext` vert automatisk låst opp (`init()` og `resume()`) ved første berøring (`touchstart`) på skjermen.
+
+5. **Responsivt Cyber-HUD & Fullskjerm:**
+   - Eige `⛶ FULLSKJERM`-val som skjuler adressefeltet for ei rein app-oppleving.
+   - Kompakt minikart ($120 \times 68\text{ px}$) og speedometer heva over pedalområdet.
+   - Orienteringsoverlay som rår spelaren til å nytte liggande format (landscape).
+

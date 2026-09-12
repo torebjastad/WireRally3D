@@ -70,6 +70,17 @@ class GameLoop {
             steerValue: 0.0
         };
 
+        // Mobile & Touch control state
+        this.touchModes = ['buttons', 'wheel', 'gyro'];
+        this.currentTouchModeIdx = 0;
+        this.touchMode = 'buttons'; // 'buttons', 'wheel', 'gyro'
+        this.touchSteerValue = 0.0;
+        this.gyroOffset = 0.0;
+        this.gyroRawAngle = 0.0;
+        this.gyroListenerActive = false;
+        this.wheelTouchId = null;
+        this.wheelStartX = 0;
+
         // Stage Management (Default to original Årølia)
         this.originalAroliaStage = {
             name: 'Årølia (Molde)',
@@ -317,13 +328,27 @@ class GameLoop {
         }
     }
 
+    unlockAudio() {
+        if (!this.audio) return;
+        if (!this.audio.initialized) {
+            this.audio.init();
+        }
+        if (this.audio.ctx && this.audio.ctx.state === 'suspended') {
+            this.audio.ctx.resume();
+        }
+    }
+
     setupTouchControls() {
+        // Global unlock on any touchstart
+        window.addEventListener('touchstart', () => this.unlockAudio(), { passive: true });
+
+        // 1. Multi-touch button binding
         const bindTouch = (id, key) => {
             const btn = document.getElementById(id);
             if (!btn) return;
             const start = (e) => {
                 e.preventDefault();
-                if (!this.audio.initialized) this.audio.init();
+                this.unlockAudio();
                 this.keys[key] = true;
                 btn.classList.add('active');
             };
@@ -334,16 +359,175 @@ class GameLoop {
             };
             btn.addEventListener('touchstart', start, { passive: false });
             btn.addEventListener('touchend', end, { passive: false });
+            btn.addEventListener('touchcancel', end, { passive: false });
             btn.addEventListener('mousedown', start);
             btn.addEventListener('mouseup', end);
+            btn.addEventListener('mouseleave', () => {
+                this.keys[key] = false;
+                btn.classList.remove('active');
+            });
         };
 
+        // Right hand pedals
         bindTouch('btnTouchUp', 'forward');
         bindTouch('btnTouchDown', 'backward');
-        bindTouch('btnTouchLeft', 'left');
-        bindTouch('btnTouchRight', 'right');
         bindTouch('btnTouchBrake', 'handbrake');
 
+        // Left hand buttons (when in buttons mode)
+        bindTouch('btnTouchLeft', 'left');
+        bindTouch('btnTouchRight', 'right');
+
+        // 2. Mobile Steering Mode Switcher (Buttons -> Wheel -> Gyro)
+        const btnTouchMode = document.getElementById('btnTouchMode');
+        if (btnTouchMode) {
+            btnTouchMode.addEventListener('click', () => {
+                this.currentTouchModeIdx = (this.currentTouchModeIdx + 1) % this.touchModes.length;
+                this.setTouchMode(this.touchModes[this.currentTouchModeIdx]);
+            });
+        }
+
+        // 3. Virtual Steering Wheel / Slider Touch Tracking
+        const wheelGroup = document.getElementById('steerWheelGroup');
+        const wheelKnob = document.getElementById('wheelKnob');
+        const wheelLabel = document.getElementById('wheelLabel');
+
+        if (wheelGroup) {
+            const onWheelStart = (e) => {
+                e.preventDefault();
+                this.unlockAudio();
+                const touch = e.changedTouches ? e.changedTouches[0] : e;
+                this.wheelTouchId = touch.identifier !== undefined ? touch.identifier : 'mouse';
+                const rect = wheelGroup.getBoundingClientRect();
+                this.wheelStartX = rect.left + rect.width * 0.5;
+                updateWheelPos(touch.clientX);
+            };
+
+            const onWheelMove = (e) => {
+                if (this.wheelTouchId === null) return;
+                let targetTouch = null;
+                if (e.changedTouches) {
+                    for (let i = 0; i < e.changedTouches.length; i++) {
+                        if (e.changedTouches[i].identifier === this.wheelTouchId) {
+                            targetTouch = e.changedTouches[i];
+                            break;
+                        }
+                    }
+                } else if (this.wheelTouchId === 'mouse') {
+                    targetTouch = e;
+                }
+                if (!targetTouch) return;
+                e.preventDefault();
+                updateWheelPos(targetTouch.clientX);
+            };
+
+            const onWheelEnd = (e) => {
+                if (this.wheelTouchId === null) return;
+                if (e.changedTouches) {
+                    for (let i = 0; i < e.changedTouches.length; i++) {
+                        if (e.changedTouches[i].identifier === this.wheelTouchId) {
+                            resetWheel();
+                            break;
+                        }
+                    }
+                } else {
+                    resetWheel();
+                }
+            };
+
+            const updateWheelPos = (clientX) => {
+                const maxRange = 65.0; // +/- 65px
+                const dx = clientX - this.wheelStartX;
+                const norm = Math.max(-1.0, Math.min(1.0, dx / maxRange));
+                // Non-linear response curve for smooth center tracking
+                this.touchSteerValue = Math.sign(norm) * Math.pow(Math.abs(norm), 1.15);
+
+                if (wheelKnob) {
+                    wheelKnob.style.transform = `translate(${norm * 52}px, -50%)`;
+                }
+                if (wheelLabel) {
+                    const pct = Math.round(Math.abs(this.touchSteerValue) * 100);
+                    if (pct < 4) {
+                        wheelLabel.innerText = '• RETT FRAM •';
+                        wheelLabel.style.color = '#00ffcc';
+                    } else if (this.touchSteerValue < 0) {
+                        wheelLabel.innerText = `◀ ${pct}% VENSTRE`;
+                        wheelLabel.style.color = '#ffaa00';
+                    } else {
+                        wheelLabel.innerText = `HØGRE ${pct}% ▶`;
+                        wheelLabel.style.color = '#ffaa00';
+                    }
+                }
+            };
+
+            const resetWheel = () => {
+                this.wheelTouchId = null;
+                this.touchSteerValue = 0.0;
+                if (wheelKnob) wheelKnob.style.transform = 'translate(0px, -50%)';
+                if (wheelLabel) {
+                    wheelLabel.innerText = 'DRA FOR Å STYRE';
+                    wheelLabel.style.color = '#00ffcc';
+                }
+            };
+
+            wheelGroup.addEventListener('touchstart', onWheelStart, { passive: false });
+            window.addEventListener('touchmove', onWheelMove, { passive: false });
+            window.addEventListener('touchend', onWheelEnd, { passive: false });
+            window.addEventListener('touchcancel', onWheelEnd, { passive: false });
+
+            wheelGroup.addEventListener('mousedown', onWheelStart);
+            window.addEventListener('mousemove', onWheelMove);
+            window.addEventListener('mouseup', onWheelEnd);
+        }
+
+        // 4. Gyroscope / Tilt Steering Calibration Button
+        const btnCalib = document.getElementById('btnCalibrateGyro');
+        if (btnCalib) {
+            btnCalib.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.gyroOffset = this.gyroRawAngle;
+                const gyroLabel = document.getElementById('gyroLabel');
+                if (gyroLabel) gyroLabel.innerText = 'NULLSTILT (0°)';
+            });
+        }
+
+        // 5. Fullscreen API Toggle
+        const btnFullscreen = document.getElementById('btnFullscreen');
+        if (btnFullscreen) {
+            btnFullscreen.addEventListener('click', () => {
+                if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                    const el = document.documentElement;
+                    if (el.requestFullscreen) {
+                        el.requestFullscreen().catch(() => {});
+                    } else if (el.webkitRequestFullscreen) {
+                        el.webkitRequestFullscreen();
+                    }
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen().catch(() => {});
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                    }
+                }
+            });
+
+            const updateFsBtn = () => {
+                const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+                btnFullscreen.innerText = isFs ? '🗗 AVSLUTT' : '⛶ FULLSKJERM';
+            };
+            document.addEventListener('fullscreenchange', updateFsBtn);
+            document.addEventListener('webkitfullscreenchange', updateFsBtn);
+        }
+
+        // 6. Dismiss Portrait Orientation Advisory
+        const btnDismiss = document.getElementById('btnDismissPortrait');
+        if (btnDismiss) {
+            btnDismiss.addEventListener('click', () => {
+                const notice = document.getElementById('portraitNotice');
+                if (notice) notice.style.display = 'none';
+            });
+        }
+
+        // Camera, Reset, and Mute buttons
         const btnCam = document.getElementById('btnCam');
         if (btnCam) {
             btnCam.innerText = '🎥 KAMERA: HELI BAKFRA';
@@ -359,6 +543,109 @@ class GameLoop {
                 const muted = this.audio.toggleMute();
                 btnMute.innerText = muted ? '🔇 MUTED' : '🔊 LYD';
             });
+        }
+    }
+
+    setTouchMode(mode) {
+        this.touchMode = mode;
+        this.touchSteerValue = 0.0;
+        this.keys.left = false;
+        this.keys.right = false;
+
+        const btnTouchMode = document.getElementById('btnTouchMode');
+        const buttonsGroup = document.getElementById('steerButtonsGroup');
+        const wheelGroup = document.getElementById('steerWheelGroup');
+        const gyroGroup = document.getElementById('steerGyroGroup');
+
+        if (buttonsGroup) buttonsGroup.style.display = (mode === 'buttons') ? 'flex' : 'none';
+        if (wheelGroup) wheelGroup.style.display = (mode === 'wheel') ? 'flex' : 'none';
+        if (gyroGroup) gyroGroup.style.display = (mode === 'gyro') ? 'flex' : 'none';
+
+        if (mode === 'buttons') {
+            if (btnTouchMode) btnTouchMode.innerText = '🎮 MODUS: KNAPPAR';
+        } else if (mode === 'wheel') {
+            if (btnTouchMode) btnTouchMode.innerText = '🎯 MODUS: STYREHJUL';
+        } else if (mode === 'gyro') {
+            if (btnTouchMode) btnTouchMode.innerText = '🔄 MODUS: GYRO';
+            this.activateGyro();
+        }
+    }
+
+    activateGyro() {
+        if (this.gyroListenerActive) return;
+
+        const startListener = () => {
+            window.addEventListener('deviceorientation', (e) => this.handleDeviceOrientation(e));
+            this.gyroListenerActive = true;
+        };
+
+        // iOS 13+ requires explicit permission via DeviceOrientationEvent.requestPermission
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            DeviceOrientationEvent.requestPermission()
+                .then((res) => {
+                    if (res === 'granted') {
+                        startListener();
+                    } else {
+                        alert('Gyrotilgang vart ikkje godkjent på denne eininga.');
+                        this.setTouchMode('buttons');
+                    }
+                })
+                .catch(() => {
+                    this.setTouchMode('buttons');
+                });
+        } else {
+            startListener();
+        }
+    }
+
+    handleDeviceOrientation(e) {
+        if (this.touchMode !== 'gyro') return;
+
+        // Determine orientation angle (landscape vs portrait)
+        const screenAngle = (typeof screen !== 'undefined' && screen.orientation && screen.orientation.angle !== undefined)
+            ? screen.orientation.angle
+            : (typeof window !== 'undefined' ? (window.orientation || 0) : 0);
+
+        let tilt = 0;
+        if (screenAngle === 90) {
+            tilt = e.beta || 0;
+        } else if (screenAngle === 270 || screenAngle === -90) {
+            tilt = -(e.beta || 0);
+        } else {
+            // Portrait orientation
+            tilt = e.gamma || 0;
+        }
+
+        this.gyroRawAngle = tilt;
+        const netTilt = tilt - this.gyroOffset;
+        const maxTilt = 22.0; // 22 degrees tilt for 100% full steering lock
+        const norm = Math.max(-1.0, Math.min(1.0, netTilt / maxTilt));
+
+        // Soft center deadzone and non-linear curve
+        if (Math.abs(norm) < 0.05) {
+            this.touchSteerValue = 0.0;
+        } else {
+            this.touchSteerValue = Math.sign(norm) * Math.pow(Math.abs(norm), 1.15);
+        }
+
+        // Update visual HUD indicator
+        const needle = document.getElementById('gyroNeedle');
+        const label = document.getElementById('gyroLabel');
+        if (needle) {
+            needle.style.transform = `rotate(${this.touchSteerValue * 30}deg)`;
+        }
+        if (label) {
+            const pct = Math.round(Math.abs(this.touchSteerValue) * 100);
+            if (pct < 3) {
+                label.innerText = `TILTER: 0°`;
+                label.style.color = '#00ffcc';
+            } else if (this.touchSteerValue < 0) {
+                label.innerText = `◀ ${Math.round(Math.abs(netTilt))}° (${pct}%)`;
+                label.style.color = '#ffaa00';
+            } else {
+                label.innerText = `(${pct}%) ${Math.round(netTilt)}° ▶`;
+                label.style.color = '#ffaa00';
+            }
         }
     }
 
@@ -703,6 +990,12 @@ class GameLoop {
             let steer = 0.0;
             if (this.keys.left) steer -= 1.0;
             if (this.keys.right) steer += 1.0;
+
+            // Touch wheel or gyro steering takes effect when in active touch mode
+            if (this.touchMode !== 'buttons' && Math.abs(this.touchSteerValue) > 0.001) {
+                steer = this.touchSteerValue;
+            }
+
             // Mouse drag steering input takes precedence when active
             if (this.mouseSteer && this.mouseSteer.isDragging) {
                 steer = this.mouseSteer.steerValue;
