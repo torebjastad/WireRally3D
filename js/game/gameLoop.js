@@ -231,10 +231,10 @@ class GameLoop {
             this.mouseSteer.currentX = clientX;
             this.mouseSteer.currentY = clientY;
             const dx = clientX - this.mouseSteer.startX;
-            const maxDrag = 130.0; // 130 pixels for 100% full steering lock
+            const maxDrag = 300.0; // Increased from 130px to 300px: requires pulling further for high steering
             let raw = Math.max(-1.0, Math.min(1.0, dx / maxDrag));
-            // Non-linear response curve for fine center corrections and smooth response
-            this.mouseSteer.steerValue = Math.sign(raw) * Math.pow(Math.abs(raw), 1.15);
+            // Progressive curve (x^1.55): very gentle around center for stable straightaways, ramping up when dragged far
+            this.mouseSteer.steerValue = Math.sign(raw) * Math.pow(Math.abs(raw), 1.55);
             this.updateMouseSteerUI(true);
         };
 

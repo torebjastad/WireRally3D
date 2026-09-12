@@ -40,8 +40,8 @@ Fysikkmotoren støttar både digital tastaturstyring og kontinuerleg analog styr
 
 ### A. Klikk & Dra med Mus (Analog Presisjonsstyring)
 - **Mekanisme:** Hald nede venstre museknapp kor som helst på skjermen og dra horisontalt mot venstre eller høgre.
-- **Skalering:** Draing på $\pm 130\text{ pikslar}$ svarar til fullt $100\ \%$ styreutslag. Ei lita justering på $15–30\text{ px}$ gjev superpresise småjusteringar i høg fart ($10–20\ \%$ utslag).
-- **Ikkje-lineær responskurve:** Små utslag nær klikkpunktet har ein roleg respons for presis sporing i køyrefeltet, medan kraftig draing slår raskt ut i hårnåler.
+- **Skalering:** Draing på $\pm 300\text{ pikslar}$ svarar til fullt $100\ \%$ styreutslag. Spelaren må dra merkbart lenger for store svingar, noko som gjer styringa roleg og tilgjevande.
+- **Progressiv responskurve ($x^{1.55}$):** Små utslag nær klikkpunktet ($0–100\text{ px}$) gjev mikroskopisk og superstabil styring ($1–10\ \%$) for perfekte rettstrekk i høg fart, medan kraftig draing mot $300\text{ px}$ kjem progressivt opp i $100\ \%$ utslag for hårnåler og sladdar.
 - **Visuell HUD-indikator:** Når du dreg med musa, visest eit diskret neon-sikte med drag-linje, peikar og sanntids svinggrad i prosent (`◀ 45% VENSTRE` / `HØGRE 60% ▶`).
 - **Slepp for re-sentrering:** Når museknappen sleppast, rettar hjula seg automatisk og mjukt opp att.
 
